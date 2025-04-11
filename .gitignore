@@ -20,6 +20,7 @@ build
 database/tsconfig.json
 server/tsconfig.json
 tsconfig_base.json
+package-lock.json
 
 # Logs
 logs
