@@ -17,10 +17,7 @@ local.properties
 .env
 node_modules/*
 build
-database/tsconfig.json
-server/tsconfig.json
-tsconfig_base.json
-package-lock.json
+/backend/package-lock.json
 
 # Logs
 logs
