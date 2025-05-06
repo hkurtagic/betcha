@@ -14,7 +14,7 @@
 .cxx
 local.properties
 
-.env
+# .env
 node_modules/*
 build
 package-lock.json
