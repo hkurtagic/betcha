@@ -3,69 +3,25 @@ import { open, Database } from 'sqlite'
 import { Bet, User, UserToken, ChoiceStake, BetStake } from './dbModels'
 import { Group } from '../model/models'
 import { customLog, logLevel } from '../winston'
+import { prisma } from '../main'
 
 /**
  * @description creates a Database controller
  */
 export class DatabaseController {
-    // #region Instantiation
-    // instance for Singleton
-    private static instance: DatabaseController | null = null
-    private db!: Database<sqlite3.Database, sqlite3.Statement>
-
-    // Private constructor to force facory use
-    private constructor() {}
-
-    // Factory with singleton
-    public static async create(dbPath: string): Promise<DatabaseController> {
-        if (!DatabaseController.instance) {
-            const controller = new DatabaseController()
-            controller.db = await open({
-                filename: dbPath,
-                driver: sqlite3.Database,
-            })
-            // always run the initialization as the impact is basically zero
-            await initDB(controller.db)
-
-            DatabaseController.instance = controller
-        }
-
-        return DatabaseController.instance
-    }
-
-    public static getInstance(): DatabaseController {
-        if (!DatabaseController.instance) {
-            throw new Error(
-                'DatabaseController has not been initialized. Call `create()` first.'
-            )
-        }
-        return DatabaseController.instance
-    }
-    // #endregion Instantiation
-
     // #region Group
-    public async createGroup(group_pin: string): Promise<Error | void> {
-        return new Promise((resolve, reject) => {
-            var sql = `INSERT INTO BetGroup (group_pin) VALUES (?)`
-            customLog(logLevel.debug, 'Database Query', sql)
-            this.db.run(sql, [group_pin], function (err: Error, result: undefined) {
-                if (err) reject(err)
-                resolve(result)
-            })
-        })
+    public async createGroup(): Promise<Error | Group> {
+        return await prisma.group.create({ data: {} })
     }
 
-    public async getGroupByPIN(group_pin: string): Promise<Group | undefined> {
-        return new Promise((resolve, reject) => {
-            var sql = `SELECT G.group_pin as pin, G.isActive FROM BetGroup G WHERE group_pin = ?`
-            customLog(logLevel.debug, 'Database Query', sql)
-            this.db.get<Group>(sql, [group_pin], function (err: Error, result: Group) {
-                if (err) reject(err)
-                resolve(result)
-            })
+    public async getGroupByPIN(group_pin: string): Promise<Group | null> {
+        return await prisma.group.findUnique({
+            where: {
+                pin: group_pin,
+            },
         })
     }
-
+    /*
     public async setGroupAsInactive(group_pin: string): Promise<Error | void> {
         return new Promise((resolve, reject) => {
             var sql = `UPDATE BetGroup SET isActive = 0 WHERE group_pin = ?`
@@ -323,5 +279,6 @@ async function initDB(db: Database): Promise<void> {
         END;
         `)
     //#endregion DB triggers
+    */
 }
 //#endregion DB initialisation

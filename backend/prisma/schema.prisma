@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./database"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Group {
+  pin      String  @id @default(uuid())
+  isActive Boolean @default(true)
+  User     User[]
+}
+
+model User {
+  user_id   String      @id @default(uuid())
+  name      String
+  groupPin  String      @unique
+  group     Group?      @relation(fields: [groupPin], references: [pin])
+  UserToken UserToken[]
+  Bet       Bet[]
+  BetStake  BetStake[]
+}
+
+model UserToken {
+  user_id String @id
+  User    User   @relation(fields: [user_id], references: [user_id])
+  token   String @unique
+}
+
+model Bet {
+  bet_id      String     @id
+  name        String
+  isClosed    Boolean
+  openedBy    User       @relation(fields: [userUser_id], references: [user_id])
+  choices     Choice[]
+  userUser_id String
+  BetStake    BetStake[]
+}
+
+model Choice {
+  choice_id     String     @id
+  text          String
+  winningChoice Boolean    @default(false)
+  bet_id        String
+  Bet           Bet?       @relation(fields: [bet_id], references: [bet_id])
+  BetStake      BetStake[]
+}
+
+model BetStake {
+  user_id   String
+  choice_id String
+  bet_id    String
+  amount    Int
+  User      User   @relation(fields: [user_id], references: [user_id])
+  Bet       Bet    @relation(fields: [bet_id], references: [bet_id])
+  Choice    Choice @relation(fields: [choice_id], references: [choice_id])
+
+  @@id([user_id, bet_id, choice_id])
+}

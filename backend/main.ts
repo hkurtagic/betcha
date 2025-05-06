@@ -8,6 +8,11 @@ import {
 } from './SocketConnectionTypes'
 import { Config, uniqueUsernameGenerator } from 'unique-username-generator'
 import { customLog, logLevel } from './winston'
+import { Group, PrismaClient } from './prisma/database'
+import { DatabaseController } from './database/dbController'
+
+export const prisma = new PrismaClient()
+
 /**
  * @description generates a random Username with uniform settings
  */
@@ -32,55 +37,69 @@ function generatePIN(pinLength: number = 8): string {
     }
     return pin
 }
+async function main() {
+    const db = new DatabaseController()
+    let g = (await db.createGroup()) as Group
+    customLog(logLevel.info, 'Group creation', JSON.stringify(g))
 
-const io = new Server<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
->(3000, {
-    connectionStateRecovery: {
-        // the backup duration of the sessions and the packets (in milliseconds)
-        maxDisconnectionDuration: 10 * 60 * 1000,
-        // whether to skip middlewares upon successful recovery
-        skipMiddlewares: true,
-    },
-})
+    const io = new Server<
+        ClientToServerEvents,
+        ServerToClientEvents,
+        InterServerEvents,
+        SocketData
+    >(3000, {
+        connectionStateRecovery: {
+            // the backup duration of the sessions and the packets (in milliseconds)
+            maxDisconnectionDuration: 10 * 60 * 1000,
+            // whether to skip middlewares upon successful recovery
+            skipMiddlewares: true,
+        },
+    })
 
-// connection errors
-io.engine.on('connection_error', (err) => {
-    console.log(err.req) // the request object
-    console.log(err.code) // the error code, for example 1
-    console.log(err.message) // the error message, for example "Session ID unknown"
-    console.log(err.context) // some additional error context
-})
+    // connection errors
+    io.engine.on('connection_error', (err) => {
+        console.log(err.req) // the request object
+        console.log(err.code) // the error code, for example 1
+        console.log(err.message) // the error message, for example "Session ID unknown"
+        console.log(err.context) // some additional error context
+    })
 
-io.on('connection', (socket) => {
-    if (socket.recovered) {
-        // recovery was successful: socket.id, socket.rooms and socket.data were restored
-        customLog(
-            logLevel.debug,
-            'Socket recovery',
-            `Socket ${socket.id} recovered successfully`
-        )
-    } else {
-        // send a random username to client on connection
-        socket.emit('sendRandomName', generateUsername())
-        // send new random username to client if requested
-        socket.on('requestRandomName', () => {
+    io.on('connection', (socket) => {
+        if (socket.recovered) {
+            // recovery was successful: socket.id, socket.rooms and socket.data were restored
+            customLog(
+                logLevel.debug,
+                'Socket recovery',
+                `Socket ${socket.id} recovered successfully`
+            )
+        } else {
+            // send a random username to client on connection
             socket.emit('sendRandomName', generateUsername())
-        })
-        // let user join group OR create group if not already exist
-        socket.on('requestCreateGroup', (username) => {
-            let roomID = randomUUID()
-        })
-        socket.on('requestJoinGroup', (username, groupPIN) => {
-            // TODO: lookup groupPIN in Database and get groupUUID
-            if (groupPIN) {
-            }
-        })
-    }
-})
+            // send new random username to client if requested
+            socket.on('requestRandomName', () => {
+                socket.emit('sendRandomName', generateUsername())
+            })
+            // let user join group OR create group if not already exist
+            socket.on('requestCreateGroup', (username) => {
+                let roomID = randomUUID()
+            })
+            socket.on('requestJoinGroup', (username, groupPIN) => {
+                // TODO: lookup groupPIN in Database and get groupUUID
+                if (groupPIN) {
+                }
+            })
+        }
+    })
+}
+main()
+    .then(async () => {
+        await prisma.$disconnect()
+    })
+    .catch(async (e) => {
+        console.error(e)
+        await prisma.$disconnect()
+        process.exit(1)
+    })
 
 // const roomID = randomUUID()
 

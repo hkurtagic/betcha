@@ -7,10 +7,10 @@ export interface User {
     id: string
     name: string
     group: Group
-    token: UserToken
 }
 export interface UserToken {
     id: string
+    token: string
 }
 export interface Bet {
     id: string
