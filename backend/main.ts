@@ -10,6 +10,9 @@ import { Config, uniqueUsernameGenerator } from 'unique-username-generator'
 import { customLog, logLevel } from './winston'
 import { Group, PrismaClient } from './prisma/database'
 import { DatabaseController } from './database/dbController'
+import express, { Express } from 'express'
+import { createServer } from 'http'
+import { http } from 'winston'
 
 export const prisma = new PrismaClient()
 
@@ -38,16 +41,23 @@ function generatePIN(pinLength: number = 8): string {
     return pin
 }
 async function main() {
+    // Database
     const db = new DatabaseController()
-    let g = (await db.createGroup()) as Group
-    customLog(logLevel.info, 'Group creation', JSON.stringify(g))
+    // let g = (await db.createGroup()) as Group
+    // customLog(logLevel.info, 'Group creation', JSON.stringify(g))
 
+    // Webserver
+    const PORT = process.env.PORT || 8080
+    const app: Express = express()
+    const httpServer = createServer(app)
+
+    // Socket
     const io = new Server<
         ClientToServerEvents,
         ServerToClientEvents,
         InterServerEvents,
         SocketData
-    >(3000, {
+    >(httpServer, {
         connectionStateRecovery: {
             // the backup duration of the sessions and the packets (in milliseconds)
             maxDisconnectionDuration: 10 * 60 * 1000,
@@ -89,6 +99,14 @@ async function main() {
                 }
             })
         }
+    })
+
+    httpServer.listen(PORT, () => {
+        customLog(
+            logLevel.info,
+            'httpServer',
+            `Listen on http://localhost:${PORT}`
+        )
     })
 }
 main()

@@ -152,7 +152,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Admin\\Documents\\VS_Code\\betcha\\backend\\prisma\\database",
+      "value": "C:\\Users\\Haris\\Documents\\vscode\\workspace\\mad\\betcha\\backend\\prisma\\database",
       "fromEnvVar": null
     },
     "config": {
@@ -166,7 +166,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Admin\\Documents\\VS_Code\\betcha\\backend\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\Haris\\Documents\\vscode\\workspace\\mad\\betcha\\backend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

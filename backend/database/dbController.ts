@@ -1,6 +1,3 @@
-import sqlite3 from 'sqlite3'
-import { open, Database } from 'sqlite'
-import { Bet, User, UserToken, ChoiceStake, BetStake } from './dbModels'
 import { Group } from '../model/models'
 import { customLog, logLevel } from '../winston'
 import { prisma } from '../main'
