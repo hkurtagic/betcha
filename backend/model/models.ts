@@ -1,15 +1,15 @@
+export interface Group {
+    pin: string
+    isActive: boolean
+    bets?: Bet[] // why in group?
+}
 export interface User {
     id: string
     name: string
     group: Group
-    token: Token
+    token: UserToken
 }
-export interface Group {
-    pin: string
-    isActive: boolean
-    bets: Bet[]
-}
-export interface Token {
+export interface UserToken {
     id: string
 }
 export interface Bet {
