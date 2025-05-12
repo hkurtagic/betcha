@@ -13,6 +13,7 @@ import { DatabaseController } from './database/dbController'
 import express, { Express } from 'express'
 import { createServer } from 'http'
 import { http } from 'winston'
+import { morganMiddleware } from './middleware/morganMiddleware'
 
 export const prisma = new PrismaClient()
 
@@ -49,6 +50,11 @@ async function main() {
     // Webserver
     const PORT = process.env.PORT || 8080
     const app: Express = express()
+
+    app.use(morganMiddleware)
+
+    app.get("/", (_, res) => {res.send("Hallo")})
+
     const httpServer = createServer(app)
 
     // Socket
@@ -105,7 +111,7 @@ async function main() {
         customLog(
             logLevel.info,
             'httpServer',
-            `Listen on http://localhost:${PORT}`
+            `Listen on http://127.0.0.1:${PORT}`
         )
     })
 }

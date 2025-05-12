@@ -4,6 +4,7 @@ enum logLevel {
     error = 'error',
     warn = 'warn',
     info = 'info',
+    http = 'http',
     debug = 'debug',
     silly = 'silly',
 }
