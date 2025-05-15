@@ -14,6 +14,7 @@ import express, { Express } from 'express'
 import { createServer } from 'http'
 import { http } from 'winston'
 import { morganMiddleware } from './middleware/morganMiddleware'
+import { errorHandler } from './middleware/errorHandler'
 
 export const prisma = new PrismaClient()
 
@@ -53,8 +54,11 @@ async function main() {
 
     app.use(morganMiddleware)
 
-    app.get("/", (_, res) => {res.send("Hallo")})
+    app.get('/', (req, res, next) => {
+        next(new Error('BROKEN'))
+    })
 
+    app.use(errorHandler) // MUST BE LAST MIDDLEWARE!!!
     const httpServer = createServer(app)
 
     // Socket

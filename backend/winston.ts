@@ -9,6 +9,11 @@ enum logLevel {
     silly = 'silly',
 }
 
+enum service {
+    httpServer = 'httpServer',
+    websocket = 'websocket',
+}
+
 function customLog(_level: logLevel, _service: string, _msg: string): void {
     const logger = createLogger({
         level: 'silly',
@@ -31,4 +36,4 @@ function customLog(_level: logLevel, _service: string, _msg: string): void {
     logger.log(_level, _msg)
 }
 
-export { customLog, logLevel }
+export { customLog, logLevel, service }
