@@ -21,6 +21,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/express": "^5.0.1",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^22.15.12",
     "kill-port": "^2.0.1",
     "nodemon": "^3.1.9",
@@ -35,10 +36,13 @@
     "@types/jsonwebtoken": "^9.0.9",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "i": "^0.3.7",
     "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "npm": "^11.4.0",
     "socket.io": "^4.8.1",
     "sqlite": "^5.1.1",
-    "unique-username-generator": "^1.4.0",
+    "unique-names-generator": "^4.7.1",
     "winston": "^3.17.0"
   }
 }

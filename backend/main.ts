@@ -6,27 +6,17 @@ import {
     InterServerEvents,
     SocketData,
 } from './SocketConnectionTypes'
-import { Config, uniqueUsernameGenerator } from 'unique-username-generator'
 import { customLog, logLevel } from './winston'
-import { Group, PrismaClient } from './prisma/database'
+import { PrismaClient } from './prisma/database'
 import { DatabaseController } from './database/dbController'
 import express, { Express } from 'express'
 import { createServer } from 'http'
-import { http } from 'winston'
 import { morganMiddleware } from './middleware/morganMiddleware'
+import { errorHandler } from './middleware/errorHandler'
+import baseRoutes from './route/baseRoutes'
 
 export const prisma = new PrismaClient()
 
-/**
- * @description generates a random Username with uniform settings
- */
-function generateUsername(): string {
-    return uniqueUsernameGenerator({
-        separator: '',
-        randomDigits: 3,
-        style: 'capital',
-    } as Config)
-}
 /**
  * @description generates a random new PIN
  */
@@ -51,10 +41,13 @@ async function main() {
     const PORT = process.env.PORT || 8080
     const app: Express = express()
 
+    // Middleware
     app.use(morganMiddleware)
 
-    app.get("/", (_, res) => {res.send("Hallo")})
+    // Routes
+    app.use('/', baseRoutes)
 
+    app.use(errorHandler) // MUST BE LAST MIDDLEWARE!!!
     const httpServer = createServer(app)
 
     // Socket
@@ -89,12 +82,6 @@ async function main() {
                 `Socket ${socket.id} recovered successfully`
             )
         } else {
-            // send a random username to client on connection
-            socket.emit('sendRandomName', generateUsername())
-            // send new random username to client if requested
-            socket.on('requestRandomName', () => {
-                socket.emit('sendRandomName', generateUsername())
-            })
             // let user join group OR create group if not already exist
             socket.on('requestCreateGroup', (username) => {
                 let roomID = randomUUID()

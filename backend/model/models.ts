@@ -29,3 +29,16 @@ export interface BetStake {
     user: User
     amount: number
 }
+
+// Express
+export interface ErrorResponse {
+    error: true
+    status: number
+    message: string
+}
+
+export interface Response {
+    error: false
+    status: number
+    message: string
+}
