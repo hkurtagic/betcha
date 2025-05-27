@@ -8116,16 +8116,16 @@ export namespace Prisma {
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     user_id?: string
-    groupPin?: string
+    name?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
-    name?: StringFilter<"User"> | string
+    groupPin?: StringFilter<"User"> | string
     group?: XOR<GroupNullableScalarRelationFilter, GroupWhereInput> | null
     UserToken?: UserTokenListRelationFilter
     Bet?: BetListRelationFilter
     BetStake?: BetStakeListRelationFilter
-  }, "user_id" | "groupPin">
+  }, "user_id" | "name">
 
   export type UserOrderByWithAggregationInput = {
     user_id?: SortOrder

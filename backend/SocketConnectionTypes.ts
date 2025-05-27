@@ -4,16 +4,13 @@ import { UUID } from 'crypto'
  * @description Client emit | Server listen events
  */
 interface ClientToServerEvents {
-    requestRandomName: () => void
-    requestCreateGroup: (name: string) => void
-    requestJoinGroup: (name: string, groupPIN: string) => void
+    requestJoinGroup: (user_id: string, group_pin: string) => void
 }
 /**
  * @description Server emit | Client listen events
  */
 interface ServerToClientEvents {
-    sendRandomName: (name: string) => void
-    confirmCreateJoinGroup: (name: string, uid: UUID) => void
+    responseJoinGroup: (message: string | Error) => void
 }
 /**
  * @description Server to Server events

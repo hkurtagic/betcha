@@ -12,15 +12,15 @@ datasource db {
 }
 
 model Group {
-  pin      String  @id @default(uuid())
+  pin      String  @id @default(cuid())
   isActive Boolean @default(true)
   User     User[]
 }
 
 model User {
   user_id   String      @id @default(uuid())
-  name      String
-  groupPin  String      @unique
+  name      String      @unique
+  groupPin  String      
   group     Group?      @relation(fields: [groupPin], references: [pin])
   UserToken UserToken[]
   Bet       Bet[]

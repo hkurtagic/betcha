@@ -1,13 +1,13 @@
-import { Group } from '../model/models'
+import { Group, User } from '../model/models'
 import { customLog, logLevel } from '../winston'
 import { prisma } from '../main'
 
 /**
  * @description creates a Database controller
  */
-export class DatabaseController {
+class DatabaseController {
     // #region Group
-    public async createGroup(): Promise<Error | Group> {
+    public async createGroup(): Promise<Group> {
         return await prisma.group.create({ data: {} })
     }
 
@@ -58,29 +58,25 @@ export class DatabaseController {
         })
     }
     // #endregion Group
-
+    */
     // #region User
-    public async createUser(
-        user_id: string,
-        user_name: string,
-        group_pin: string
-    ): Promise<void> {
-        await this.db.run(
-            `INSERT INTO User (user_id, user_name, group_pin) VALUES (?, ?, ?)`,
-            [user_id, user_name, group_pin]
-        )
+    public async createUser(user_name: string, group_pin: string): Promise<User> {
+        return await prisma.user.create({ data: { name: user_name, groupPin: group_pin } })
     }
 
-    public async getUserByID(user_id: string): Promise<User | undefined> {
-        return await this.db.get<User>(`SELECT * FROM User WHERE user_id = ?`, [
-            user_id,
-        ])
+    public async getUserByID(user_id: string): Promise<User | null> {
+        return await prisma.user.findUnique({where: { user_id: user_id}})
     }
 
-    public async deleteUserByID(user_id: string): Promise<void> {
-        await this.db.run(`DELETE FROM User WHERE user_id = ?`, [user_id])
+    public async getUserByName(user_name: string): Promise<User | null> {
+        return await prisma.user.findUnique({where: { name: user_name}})
+    }
+
+    public async deleteUserByID(user_id: string): Promise<User> {
+        return await prisma.user.delete({where: {user_id: user_id}})
     }
     // #endregion User
+    /*
     // #region UserToken
     public async createUserToken(user_id: string, token: string): Promise<void> {
         await this.db.run(`INSERT INTO Token (user_id, token) VALUES (?, ?)`, [
@@ -279,3 +275,5 @@ async function initDB(db: Database): Promise<void> {
     */
 }
 //#endregion DB initialisation
+
+export const databaseController = new DatabaseController

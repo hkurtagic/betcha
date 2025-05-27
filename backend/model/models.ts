@@ -1,12 +1,11 @@
 export interface Group {
     pin: string
     isActive: boolean
-    bets?: Bet[] // why in group?
 }
 export interface User {
-    id: string
+    user_id: string
     name: string
-    group: Group
+    groupPin: string
 }
 export interface UserToken {
     id: string
@@ -28,17 +27,4 @@ export interface Choice {
 export interface BetStake {
     user: User
     amount: number
-}
-
-// Express
-export interface ErrorResponse {
-    error: true
-    status: number
-    message: string
-}
-
-export interface Response {
-    error: false
-    status: number
-    message: string
 }

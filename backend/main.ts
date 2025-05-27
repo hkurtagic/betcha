@@ -1,4 +1,5 @@
 import { Namespace, Server } from 'socket.io'
+import 'dotenv/config'
 import { randomInt, randomUUID } from 'crypto'
 import {
     ClientToServerEvents,
@@ -6,17 +7,13 @@ import {
     InterServerEvents,
     SocketData,
 } from './SocketConnectionTypes'
-import { customLog, logLevel } from './winston'
+import { customLog, logLevel, service } from './winston'
 import { PrismaClient } from './prisma/database'
-import { DatabaseController } from './database/dbController'
-import express, { Express } from 'express'
 import { createServer } from 'http'
-import { morganMiddleware } from './middleware/morganMiddleware'
-import { errorHandler } from './middleware/errorHandler'
-import baseRoutes from './route/baseRoutes'
+import { app, PORT } from './app'
+import { databaseController as dbController } from './database/dbController'
 
 export const prisma = new PrismaClient()
-
 /**
  * @description generates a random new PIN
  */
@@ -31,23 +28,24 @@ function generatePIN(pinLength: number = 8): string {
     }
     return pin
 }
+/**
+ * @description drop all table content
+ */
+async function resetTabels() {
+    await prisma.betStake.deleteMany({})
+    await prisma.choice.deleteMany({})
+    await prisma.bet.deleteMany({})
+    await prisma.userToken.deleteMany({})
+    await prisma.user.deleteMany({})
+    await prisma.group.deleteMany({})
+
+    customLog(logLevel.warn, service.database, 'All tables wiped (see .env)')
+}
+
 async function main() {
-    // Database
-    const db = new DatabaseController()
+    process.env.DROP_TABLE === "true" ? resetTabels() : null
     // let g = (await db.createGroup()) as Group
     // customLog(logLevel.info, 'Group creation', JSON.stringify(g))
-
-    // Webserver
-    const PORT = process.env.PORT || 8080
-    const app: Express = express()
-
-    // Middleware
-    app.use(morganMiddleware)
-
-    // Routes
-    app.use('/', baseRoutes)
-
-    app.use(errorHandler) // MUST BE LAST MIDDLEWARE!!!
     const httpServer = createServer(app)
 
     // Socket
@@ -83,12 +81,31 @@ async function main() {
             )
         } else {
             // let user join group OR create group if not already exist
-            socket.on('requestCreateGroup', (username) => {
-                let roomID = randomUUID()
-            })
-            socket.on('requestJoinGroup', (username, groupPIN) => {
-                // TODO: lookup groupPIN in Database and get groupUUID
-                if (groupPIN) {
+            socket.on('requestJoinGroup', async (user_id, group_pin) => {
+                const checkUserId = await dbController.getUserByID(user_id)
+                const checkGroupPin = await dbController.getGroupByPIN(group_pin)
+                const errors = new Map
+
+                if (checkGroupPin != null) errors.set('emptyGroupPin', 'No group pin passed')
+                if (checkUserId != null) errors.set('emptyUserId', 'No user id passed')
+                if (checkUserId != null && checkUserId.name != null) errors.set('userIdIsEqual', 'User ids are not equal')
+
+                
+                if (errors.size != 0) {
+                    socket.join(group_pin)
+                    //@ts-expect-error checkUserId.name can not be null
+                    socket.emit('responseJoinGroup', checkUserId.name)
+                } else {
+                    const msg: Error = {
+                        name: '',
+                        message: ''
+                    }
+
+                    errors.forEach((value, key) => msg.name = `${msg.name}, ${key}`)
+                    errors.forEach((value, key) => msg.message = `${msg.message}, ${value}`)
+                    msg.name.substring(2)
+                    msg.message.substring(2)
+                    socket.emit('responseJoinGroup', msg)
                 }
             })
         }
@@ -98,7 +115,7 @@ async function main() {
         customLog(
             logLevel.info,
             'httpServer',
-            `Listen on http://127.0.0.1:${PORT}`
+            `Listen on http://${process.env.IP}:${PORT}`
         )
     })
 }

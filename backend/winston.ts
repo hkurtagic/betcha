@@ -12,11 +12,12 @@ enum logLevel {
 enum service {
     httpServer = 'httpServer',
     websocket = 'websocket',
+    database = 'database'
 }
 
 function customLog(_level: logLevel, _service: string, _msg: string): void {
     const logger = createLogger({
-        level: 'silly',
+        level: process.env.LOG_LEVEL,
         transports: [new transports.Console()],
         defaultMeta: {
             service: _service,
