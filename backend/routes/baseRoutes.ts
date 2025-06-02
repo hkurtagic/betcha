@@ -28,8 +28,7 @@ function generateUsername(): string {
 const router = Router()
 
 router.get('/ping', (_, res) => {
-
-    res.json({message: 'pong'})
+    res.json({ message: 'pong' })
 })
 
 router.get('/randomName', (_, res) => {
@@ -38,30 +37,127 @@ router.get('/randomName', (_, res) => {
     res.json(name)
 })
 
-router.post('/newUser', async (req, res, next) => {
-    console.log(req.body)
-    const user_name: string = req.body.user_name ? req.body.user_name : res.status(400).json({message: 'No user_name provided'})
+router.post('/newUser', async (req, res) => {
+    const user_name: string = req.body.user_name
+        ? req.body.user_name
+        : res.status(400).json({ message: 'No user_name provided' })
     let group_pin: string
-    const g = req.body.group_pin ? await dbController.getGroupByPIN(req.body.group_pin) : null
+    const g = req.body.group_pin
+        ? await dbController.getGroupByPIN(req.body.group_pin)
+        : null
     if (g) {
         group_pin = req.body.group_pin
     } else {
         group_pin = (await dbController.createGroup()).pin
     }
 
-    await dbController.getUserByName(user_name)
-    .then(async (data) => {
-        if (data != null) {
-            res.status(400).json({message: 'User already in use'})
-        } else {
-            return await dbController.createUser(user_name, group_pin)
-            .then((u: User) => {
-                res.json(u)
+    await dbController
+        .getUserByName(user_name)
+        .then(async (data) => {
+            if (data != null) {
+                res.status(400).json({ message: 'User already in use' })
+            } else {
+                return await dbController
+                    .createUser(user_name, group_pin)
+                    .then((u: User) => {
+                        res.json(u)
+                    })
+                    .catch((err) => {
+                        throw new Error(err)
+                    })
+            }
+        })
+        .catch((err) => {
+            throw new Error(err)
+        })
+})
+
+router.patch('/updateUser', async (req, res) => {
+    const user_name: string = req.body.user_name
+    const user_id: string = req.body.user_id
+    const group_pin: string = req.body.group_pin
+    if (!user_id) res.status(400).json({ message: 'No user_id provided' })
+    else if (!user_name && !group_pin)
+        res.status(400).json({ message: 'No user_name or group_pin provided' })
+    else {
+        const checkUserId = await dbController
+            .getUserByID(user_id)
+            .then(async (data) => data)
+            .catch((err) => {
+                throw new Error(err)
             })
-            .catch(err => {throw new Error(err)})
+
+        let user: User
+        if (!checkUserId) {
+            res.status(400).json({ message: 'User could not be found' })
+        } else {
+            if (user_name) {
+                let checkUserName = await dbController
+                    .getUserByName(user_name)
+                    .then((data) => data)
+                    .catch((err) => {
+                        throw new Error(err)
+                    })
+
+                if (checkUserName) {
+                    res.status(400).json({ message: 'Username already in use' })
+                } else {
+                    await dbController
+                        .updateUsernameByID(user_id, user_name)
+                        .then((u: User) => (user = u))
+                        .catch((err) => {
+                            throw new Error(err)
+                        })
+                }
+            }
+
+            if (group_pin) {
+                let checkGroupPIN = await dbController
+                    .getGroupByPIN(group_pin)
+                    .then((data) => data)
+                    .catch((err) => {
+                        throw new Error(err)
+                    })
+
+                if (!checkGroupPIN) {
+                    res.status(400).json({
+                        message: 'Group could not be found',
+                    })
+                } else {
+                    await dbController
+                        .updateUserGroupPinByID(user_id, group_pin)
+                        .then((u: User) => res.json(u))
+                        .catch((err) => {
+                            throw new Error(err)
+                        })
+                }
+            }
         }
-    }).
-    catch(err => next(err))
+    }
+})
+
+router.delete('/deleteUser', async (req, res) => {
+    const user_id: string = req.body.user_id
+    if (!user_id) res.status(400).json({ message: 'No user_id provided' })
+    else {
+        const checkUserId = await dbController
+            .getUserByID(user_id)
+            .then(async (data) => data)
+            .catch((err) => {
+                throw new Error(err)
+            })
+
+        if (!checkUserId) {
+            res.status(400).json({ message: 'User could not be found' })
+        } else {
+            await dbController
+                .deleteUserByID(user_id)
+                .then((u: User) => res.json(u))
+                .catch((err) => {
+                    throw new Error(err)
+                })
+        }
+    }
 })
 
 export default router

@@ -60,20 +60,45 @@ class DatabaseController {
     // #endregion Group
     */
     // #region User
-    public async createUser(user_name: string, group_pin: string): Promise<User> {
-        return await prisma.user.create({ data: { name: user_name, groupPin: group_pin } })
+    public async createUser(
+        user_name: string,
+        group_pin: string
+    ): Promise<User> {
+        return await prisma.user.create({
+            data: { name: user_name, groupPin: group_pin },
+        })
     }
 
     public async getUserByID(user_id: string): Promise<User | null> {
-        return await prisma.user.findUnique({where: { user_id: user_id}})
+        return await prisma.user.findUnique({ where: { user_id: user_id } })
     }
 
     public async getUserByName(user_name: string): Promise<User | null> {
-        return await prisma.user.findUnique({where: { name: user_name}})
+        return await prisma.user.findUnique({ where: { name: user_name } })
     }
 
     public async deleteUserByID(user_id: string): Promise<User> {
-        return await prisma.user.delete({where: {user_id: user_id}})
+        return await prisma.user.delete({ where: { user_id: user_id } })
+    }
+
+    public async updateUsernameByID(
+        user_id: string,
+        user_name: string
+    ): Promise<User> {
+        return await prisma.user.update({
+            where: { user_id: user_id },
+            data: { name: user_name },
+        })
+    }
+
+    public async updateUserGroupPinByID(
+        user_id: string,
+        group_pin: string
+    ): Promise<User> {
+        return await prisma.user.update({
+            where: { user_id: user_id },
+            data: { groupPin: group_pin },
+        })
     }
     // #endregion User
     /*
@@ -276,4 +301,4 @@ async function initDB(db: Database): Promise<void> {
 }
 //#endregion DB initialisation
 
-export const databaseController = new DatabaseController
+export const databaseController = new DatabaseController()

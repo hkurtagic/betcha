@@ -1,0 +1,28 @@
+POST http://localhost:8000/newUser
+User-Agent: vscode-restclient
+Content-Type: application/json
+
+{
+    "user_name": "test1"
+}
+
+###
+
+PATCH http://localhost:8000/updateUser
+User-Agent: vscode-restclient
+Content-Type: application/json
+
+{
+    "user_id": "807923ea-1ab9-4b7e-a221-47139877f185",
+    "group_pin": "cmbfnra620000t970obrj9q6n"
+}
+
+###
+
+DELETE http://localhost:8000/deleteUser
+User-Agent: vscode-restclient
+Content-Type: application/json
+
+{
+    "user_id": "5cc33931-fcd1-42f3-a997-62fd0f542b94"
+}
