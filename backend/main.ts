@@ -1,5 +1,7 @@
-import { Namespace, Server } from 'socket.io'
+import { Namespace, Server, ServerOptions } from 'socket.io'
 import 'dotenv/config'
+//@ts-ignore
+import parser from 'socket.io-json-parser'
 import { randomInt, randomUUID } from 'crypto'
 import {
     ClientToServerEvents,
@@ -12,6 +14,7 @@ import { PrismaClient } from './prisma/database'
 import { createServer } from 'http'
 import { app, PORT } from './app'
 import { databaseController as dbController } from './database/dbController'
+import HttpStatusCode from './HTTPStatusCodes'
 
 export const prisma = new PrismaClient()
 /**
@@ -43,7 +46,7 @@ async function resetTabels() {
 }
 
 async function main() {
-    process.env.DROP_TABLE === "true" ? resetTabels() : null
+    process.env.DROP_TABLE === 'true' ? resetTabels() : null
     // let g = (await db.createGroup()) as Group
     // customLog(logLevel.info, 'Group creation', JSON.stringify(g))
     const httpServer = createServer(app)
@@ -55,14 +58,16 @@ async function main() {
         InterServerEvents,
         SocketData
     >(httpServer, {
-        connectionStateRecovery: {
-            // the backup duration of the sessions and the packets (in milliseconds)
-            maxDisconnectionDuration: 10 * 60 * 1000,
-            // whether to skip middlewares upon successful recovery
-            skipMiddlewares: true,
-        },
+        // parser: parser,
+        connectionStateRecovery: undefined,
+        // connectionStateRecovery: {
+        //     // the backup duration of the sessions and the packets (in milliseconds)
+        //     maxDisconnectionDuration: 10 * 60 * 1000,
+        //     // whether to skip middlewares upon successful recovery
+        //     skipMiddlewares: true,
+        // },
     })
-
+    // customLog(logLevel.info, 'SocketIO', `Listen on ${io.httpServer.address()}`)
     // connection errors
     io.engine.on('connection_error', (err) => {
         console.log(err.req) // the request object
@@ -72,6 +77,13 @@ async function main() {
     })
 
     io.on('connection', (socket) => {
+        socket.onAnyOutgoing((event, ...args) => {
+            customLog(
+                logLevel.debug,
+                service.websocket,
+                `Outgoing Socket data: ${event} \n ${args}`
+            )
+        })
         if (socket.recovered) {
             // recovery was successful: socket.id, socket.rooms and socket.data were restored
             customLog(
@@ -81,31 +93,41 @@ async function main() {
             )
         } else {
             // let user join group OR create group if not already exist
-            socket.on('requestJoinGroup', async (user_id, group_pin) => {
+            socket.on('requestJoinGroup', async (data) => {
+                const [user_id, group_pin] = Object.values(JSON.parse(data)) as string[]
+                const u = JSON.parse(data).user_id
+                customLog(
+                    logLevel.debug,
+                    'requestJoinGroup',
+                    `Socket data: ${user_id} ${group_pin} from ${data}`
+                )
                 const checkUserId = await dbController.getUserByID(user_id)
                 const checkGroupPin = await dbController.getGroupByPIN(group_pin)
-                const errors = new Map
+                const errors = new Map()
 
-                if (checkGroupPin != null) errors.set('emptyGroupPin', 'No group pin passed')
+                if (checkGroupPin != null)
+                    errors.set('emptyGroupPin', 'No group pin passed')
                 if (checkUserId != null) errors.set('emptyUserId', 'No user id passed')
-                if (checkUserId != null && checkUserId.name != null) errors.set('userIdIsEqual', 'User ids are not equal')
+                if (checkUserId != null && checkUserId.name != null)
+                    errors.set('userIdIsEqual', 'User ids are not equal')
 
-                
                 if (errors.size != 0) {
                     socket.join(group_pin)
-                    //@ts-expect-error checkUserId.name can not be null
-                    socket.emit('responseJoinGroup', checkUserId.name)
+                    socket.emit('responseJoinGroup', JSON.stringify(HttpStatusCode.OK))
                 } else {
                     const msg: Error = {
                         name: '',
-                        message: ''
+                        message: '',
                     }
 
-                    errors.forEach((value, key) => msg.name = `${msg.name}, ${key}`)
-                    errors.forEach((value, key) => msg.message = `${msg.message}, ${value}`)
+                    errors.forEach((value, key) => (msg.name = `${msg.name}, ${key}`))
+                    errors.forEach(
+                        (value, key) => (msg.message = `${msg.message}, ${value}`)
+                    )
                     msg.name.substring(2)
                     msg.message.substring(2)
-                    socket.emit('responseJoinGroup', msg)
+
+                    socket.emit('responseJoinGroup', JSON.stringify(msg))
                 }
             })
         }

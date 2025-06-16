@@ -37,6 +37,21 @@ router.get('/randomName', (_, res) => {
     res.json(name)
 })
 
+router.get('/user/:userId', async (req, res) => {
+    const user_id = req.params.userId
+    const user = await dbController
+        .getUserByID(user_id)
+        .then((u: User | null) => u)
+        .catch((err) => {
+            throw new Error(err)
+        })
+    if (!user) {
+        res.status(400).json({ message: 'User could not be found' })
+    }
+    customLog(logLevel.debug, service.httpServer, user_id)
+    res.json(user)
+})
+
 router.post('/newUser', async (req, res) => {
     const user_name: string = req.body.user_name
         ? req.body.user_name

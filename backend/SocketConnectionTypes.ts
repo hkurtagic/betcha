@@ -4,7 +4,7 @@ import { UUID } from 'crypto'
  * @description Client emit | Server listen events
  */
 interface ClientToServerEvents {
-    requestJoinGroup: (user_id: string, group_pin: string) => void
+    requestJoinGroup: (data: string) => void
 }
 /**
  * @description Server emit | Client listen events

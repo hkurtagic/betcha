@@ -1,0 +1,44 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!--
+        This SVG defines a brand new logo for the "Betcha" Android application,
+        designed to capture the essence of the phrase "hold my beer" without
+        direct literal representation. It conveys confident prediction, decisive
+        action, and a playful "gotcha" moment, suitable for a Kahoot-style
+        betting app that involves no real-world transactions.
+
+        The logo features:
+        - A rounded square background with a vibrant, modern linear gradient,
+          giving it an energetic and appealing look.
+        - A central, stylized "snap" or "decisive click" motif, represented by
+          radiating concentric rings. This symbolizes a quick, confident action
+          or a moment of immediate confirmation.
+        - A bold, dynamic checkmark positioned at the epicenter of the snap effect.
+          This checkmark signifies a successful prediction, a confirmed bet, and
+          the underlying "Betcha" confidence – the "I told you so" moment.
+        - The overall style is clean, abstract, and modern, aiming for high
+          recognition and a distinct identity.
+
+        Colors used:
+        - Background Gradient: From a deep, rich violet (#673AB7) to a bright,
+          energetic magenta (#E91E63), creating a dynamic and engaging backdrop.
+        - Snap Rings & Checkmark: A vibrant, contrasting lime green (#CDDC39),
+          chosen for its high visibility and playful energy, ensuring the core
+          elements stand out.
+    -->
+
+    <defs>
+        <linearGradient id="gradient_h_m_b" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#673AB7"/> <stop offset="100%" stop-color="#E91E63"/> </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="240" height="240" rx="48" fill="url(#gradient_h_m_b)"/>
+
+    <!-- These rings radiate outwards, symbolizing a quick, impactful action.
+         Opacity is used to create a subtle fading effect. -->
+    <circle cx="120" cy="120" r="80" stroke="#CDDC39" stroke-width="7" opacity="0.2"/>
+    <circle cx="120" cy="120" r="60" stroke="#CDDC39" stroke-width="7" opacity="0.4"/>
+    <circle cx="120" cy="120" r="40" stroke="#CDDC39" stroke-width="7" opacity="0.6"/>
+
+    <!-- This checkmark is the focal point, representing the confident
+         confirmation of a prediction or bet. Its size and stroke make it prominent. -->
+    <path d="M85 120 L110 145 L155 95" stroke="#CDDC39" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
