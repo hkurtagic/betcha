@@ -14,7 +14,6 @@ import { PrismaClient } from './prisma/database'
 import { createServer } from 'http'
 import { app, PORT } from './app'
 import { databaseController as dbController } from './database/dbController'
-import HttpStatusCode from './HTTPStatusCodes'
 
 export const prisma = new PrismaClient()
 /**
@@ -34,19 +33,60 @@ function generatePIN(pinLength: number = 8): string {
 /**
  * @description drop all table content
  */
-async function resetTabels() {
-    await prisma.betStake.deleteMany({})
-    await prisma.choice.deleteMany({})
-    await prisma.bet.deleteMany({})
-    await prisma.userToken.deleteMany({})
-    await prisma.user.deleteMany({})
-    await prisma.group.deleteMany({})
-
-    customLog(logLevel.warn, service.database, 'All tables wiped (see .env)')
+export async function resetTables() {
+    try {
+        await prisma.betStake.deleteMany({})
+        await prisma.userToken.deleteMany({})
+        await prisma.choice.deleteMany({})
+        await prisma.bet.deleteMany({})
+        await prisma.user.deleteMany({})
+        await prisma.group.deleteMany({})
+        customLog(
+            logLevel.warn,
+            service.database,
+            'All tables wiped (see .env)'
+        )
+    } catch (error) {
+        customLog(
+            logLevel.error,
+            service.database,
+            `Error resetting database tables: ${error}`
+        )
+        throw error
+    }
+}
+async function checkIfUserExists(
+    user_id?: string,
+    user_name?: string
+): Promise<boolean | Error> {
+    if (!user_id && !user_name)
+        return new Error('No username or userid provided')
+    try {
+        if (user_id) {
+            return (await dbController.getUserByID(user_id)) === null
+                ? true
+                : false
+        } else if (user_name) {
+            return (await dbController.getUserByName(user_name)) === null
+                ? true
+                : false
+        } else {
+            return new Error(
+                'Unexpected condition: Neither user_id nor user_name was processed'
+            )
+        }
+    } catch (error) {
+        if (error instanceof Error) return error
+        return new Error(
+            'An unknown error occurred while checking user existence'
+        )
+    }
 }
 
 async function main() {
-    process.env.DROP_TABLE === 'true' ? resetTabels() : null
+    process.env.DROP_TABLE === 'true' && process.env.NODE_ENV === undefined
+        ? resetTables()
+        : null
     // let g = (await db.createGroup()) as Group
     // customLog(logLevel.info, 'Group creation', JSON.stringify(g))
     const httpServer = createServer(app)
@@ -102,27 +142,37 @@ async function main() {
                     `Socket data: ${user_id} ${group_pin} from ${data}`
                 )
                 const checkUserId = await dbController.getUserByID(user_id)
-                const checkGroupPin = await dbController.getGroupByPIN(group_pin)
+                const checkGroupPin = await dbController.getGroupByPIN(
+                    group_pin
+                )
                 const errors = new Map()
 
                 if (checkGroupPin != null)
                     errors.set('emptyGroupPin', 'No group pin passed')
-                if (checkUserId != null) errors.set('emptyUserId', 'No user id passed')
+                if (checkUserId != null)
+                    errors.set('emptyUserId', 'No user id passed')
                 if (checkUserId != null && checkUserId.name != null)
                     errors.set('userIdIsEqual', 'User ids are not equal')
 
                 if (errors.size != 0) {
                     socket.join(group_pin)
-                    socket.emit('responseJoinGroup', JSON.stringify(HttpStatusCode.OK))
+                // TODO: RETURN ALL USERS IN GROUP
+                    socket
+                        .to(group_pin)
+                        //@ts-expect-error checkUserId.name can not be null
+                        .emit('responseJoinGroup', checkUserId.name)
                 } else {
                     const msg: Error = {
                         name: '',
                         message: '',
                     }
 
-                    errors.forEach((value, key) => (msg.name = `${msg.name}, ${key}`))
                     errors.forEach(
-                        (value, key) => (msg.message = `${msg.message}, ${value}`)
+                        (value, key) => (msg.name = `${msg.name}, ${key}`)
+                    )
+                    errors.forEach(
+                        (value, key) =>
+                            (msg.message = `${msg.message}, ${value}`)
                     )
                     msg.name.substring(2)
                     msg.message.substring(2)
@@ -130,6 +180,12 @@ async function main() {
                     socket.emit('responseJoinGroup', JSON.stringify(msg))
                 }
             })
+
+            /* socket.on('requestCreateBet', async (user_id, bet_name, choice) => {
+                const checkUserId = await checkIfUserExists(
+                    (user_id = user_id)
+                ).then((d) => d)
+            }) */
         }
     })
 

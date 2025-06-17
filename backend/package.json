@@ -13,7 +13,7 @@
     "start": "npm run build && node build/main.js",
     "start:demon": "npm run build && nodemon build/main.js",
     "stop": "npx kill-port 3000",
-    "test": "jest",
+    "test": "set NODE_ENV=test&& jest",
     "test:openHandlers": "jest --detectOpenHandles",
     "reset_prisma": "npx prisma db push reset "
   },
