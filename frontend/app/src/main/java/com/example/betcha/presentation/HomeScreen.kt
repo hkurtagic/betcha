@@ -140,10 +140,11 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(0.6f),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text(text = "Start", style = MaterialTheme.typography.labelLarge)
+            Text(text = if (state.groupPIN.text != "") "Join Group" else "Create Group",
+            style = MaterialTheme.typography.labelLarge)
             Icon(
                 painter = painterResource(R.drawable.play_arrow_24dp_black),
-                contentDescription = "Start"
+                contentDescription = if (state.groupPIN.text != "") "Join Group" else "Create Group"
             )
         }
 
