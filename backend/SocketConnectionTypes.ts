@@ -17,11 +17,17 @@ interface ClientToServerEvents {
         data: string,
         callback: (msg: { status: HttpStatusCode; msg?: string }) => void
     ) => void
+    requestCloseBet: (
+        data: string,
+        callback: (msg: { status: HttpStatusCode; msg?: string }) => void
+    ) => void
 }
 /**
  * @description Server emit | Client listen events
  */
-interface ServerToClientEvents {}
+interface ServerToClientEvents {
+    responseAllBetsInGroupUpdate: (data: string) => void
+}
 /**
  * @description Server to Server events
  */

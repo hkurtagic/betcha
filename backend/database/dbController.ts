@@ -1,7 +1,6 @@
 import { Bet, BetStake, Choice, Group, User } from '../model/models'
-import { customLog, logLevel } from '../winston'
+import { customLog, logLevel, service } from '../winston'
 import { prisma } from '../main'
-import { Prisma } from '@prisma/client'
 import { text } from 'node:stream/consumers'
 
 /**
@@ -141,7 +140,20 @@ class DatabaseController {
     }
 
     public async getBetById(bet_id: string): Promise<Bet | null> {
-        return await prisma.bet.findUnique({ where: { bet_id: bet_id } })
+        return await prisma.bet.findUnique({
+            where: { bet_id: bet_id },
+            include: { openedBy: true },
+        })
+    }
+
+    public async updateBetClosingStateById(
+        bet_id: string,
+        bet_state: boolean
+    ): Promise<Bet | null> {
+        return await prisma.bet.update({
+            where: { bet_id: bet_id },
+            data: { isClosed: bet_state },
+        })
     }
 
     public async createBetStake(
@@ -175,6 +187,15 @@ class DatabaseController {
     public async getChoiceById(choice_id: string): Promise<Choice | null> {
         return await prisma.choice.findUnique({
             where: { choice_id: choice_id },
+        })
+    }
+
+    public async getBetStakeByNameAndBet(
+        user_id: string,
+        bet_id: string
+    ): Promise<BetStake[] | null> {
+        return await prisma.betStake.findMany({
+            where: { user_id: user_id, bet_id: bet_id },
         })
     }
     /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {

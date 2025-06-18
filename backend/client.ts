@@ -118,6 +118,26 @@ import { databaseController } from './database/dbController'
                     )
                 }
             )
+
+            temp.clear()
+            temp.set('user_id', user.user_id)
+            //@ts-ignore
+            temp.set('bet_id', user.Bet[0].choices[0].bet_id)
+            socket.emit(
+                'requestCloseBet',
+                JSON.stringify(Object.fromEntries(temp)),
+                (res) => {
+                    customLog(
+                        logLevel.info,
+                        service.websocket,
+                        `${res.status} ${
+                            res.msg
+                                ? `requestCloseBet: ${res.msg}`
+                                : 'requestCloseBet: No message'
+                        }`
+                    )
+                }
+            )
         }
     )
     // socket.emit('newUser', 'testName1')
