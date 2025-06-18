@@ -14,6 +14,7 @@ import { PrismaClient } from './prisma/database'
 import { createServer } from 'http'
 import { app, PORT } from './app'
 import { databaseController as dbController } from './database/dbController'
+import HttpStatusCode from './HTTPStatusCodes'
 
 export const prisma = new PrismaClient()
 /**
@@ -33,7 +34,7 @@ function generatePIN(pinLength: number = 8): string {
 /**
  * @description drop all table content
  */
-export async function resetTables() {
+async function resetTables() {
     try {
         await prisma.betStake.deleteMany({})
         await prisma.userToken.deleteMany({})
@@ -55,6 +56,14 @@ export async function resetTables() {
         throw error
     }
 }
+/**
+ *
+ * @param user_id
+ * @param user_name
+ * @returns Promise<boolean | Error>
+ *
+ * @description Check if user exists in database. Returns true if exists
+ */
 async function checkIfUserExists(
     user_id?: string,
     user_name?: string
@@ -83,13 +92,22 @@ async function checkIfUserExists(
     }
 }
 
+const httpServer = createServer(app)
+
+httpServer.listen(PORT, () => {
+    customLog(
+        logLevel.info,
+        'httpServer',
+        `Listen on http://${process.env.IP}:${PORT}`
+    )
+})
+
 async function main() {
     process.env.DROP_TABLE === 'true' && process.env.NODE_ENV === undefined
         ? resetTables()
         : null
     // let g = (await db.createGroup()) as Group
     // customLog(logLevel.info, 'Group creation', JSON.stringify(g))
-    const httpServer = createServer(app)
 
     // Socket
     const io = new Server<
@@ -133,9 +151,20 @@ async function main() {
             )
         } else {
             // let user join group OR create group if not already exist
-            socket.on('requestJoinGroup', async (data) => {
-                const [user_id, group_pin] = Object.values(JSON.parse(data)) as string[]
-                const u = JSON.parse(data).user_id
+            socket.on('requestJoinGroup', async (data, callback) => {
+                const [user_id, group_pin] = Object.values(
+                    JSON.parse(data)
+                ) as string[]
+
+                if (user_id === undefined || group_pin === undefined) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: JSON.stringify('user_id and group_pin needed'),
+                    })
+
+                    return
+                }
+
                 customLog(
                     logLevel.debug,
                     'requestJoinGroup',
@@ -154,13 +183,9 @@ async function main() {
                 if (checkUserId != null && checkUserId.name != null)
                     errors.set('userIdIsEqual', 'User ids are not equal')
 
-                if (errors.size != 0) {
+                if (errors.size === 0) {
                     socket.join(group_pin)
-                // TODO: RETURN ALL USERS IN GROUP
-                    socket
-                        .to(group_pin)
-                        //@ts-expect-error checkUserId.name can not be null
-                        .emit('responseJoinGroup', checkUserId.name)
+                    callback({ status: HttpStatusCode.OK })
                 } else {
                     const msg: Error = {
                         name: '',
@@ -176,25 +201,38 @@ async function main() {
                     )
                     msg.name.substring(2)
                     msg.message.substring(2)
-
-                    socket.emit('responseJoinGroup', JSON.stringify(msg))
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: JSON.stringify(msg),
+                    })
                 }
             })
 
-            /* socket.on('requestCreateBet', async (user_id, bet_name, choice) => {
-                const checkUserId = await checkIfUserExists(
-                    (user_id = user_id)
-                ).then((d) => d)
-            }) */
-        }
-    })
+            socket.on('requestCreateBet', async (data, callback) => {
+                const [user_id, bet_name, bet_choice] = Object.values(
+                    JSON.parse(data)
+                ) as string[]
 
-    httpServer.listen(PORT, () => {
-        customLog(
-            logLevel.info,
-            'httpServer',
-            `Listen on http://${process.env.IP}:${PORT}`
-        )
+                if (!user_id || !bet_name || !bet_choice)
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user_id, bet_name or bet_choice not provided',
+                    })
+                if (!(await checkIfUserExists(user_id)))
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user_id does not exist',
+                    })
+
+                const bet = await dbController.createBet(
+                    bet_name,
+                    user_id,
+                    bet_choice as unknown as string[]
+                )
+                customLog(logLevel.debug, service.websocket, `${bet}`)
+                callback({ status: HttpStatusCode.OK })
+            })
+        }
     })
 }
 main()
@@ -249,3 +287,4 @@ main()
 // io.on('end', function () {
 //     io.close()
 // })
+export { resetTables, httpServer }

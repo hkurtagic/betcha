@@ -1,12 +1,14 @@
 import request from 'supertest'
 import { app } from '../app'
-import { User } from '../model/models'
+import { Bet, Choice, User } from '../model/models'
 import { io, Socket } from 'socket.io-client'
 import {
     ClientToServerEvents,
     ServerToClientEvents,
 } from '../SocketConnectionTypes'
-import { prisma, resetTables } from '../main'
+import { httpServer, prisma, resetTables } from '../main'
+import HttpStatusCode from '../HTTPStatusCodes'
+import { customLog, logLevel, service } from '../winston'
 
 describe('Main', () => {
     let USER: User = {
@@ -14,20 +16,79 @@ describe('Main', () => {
         name: '',
         groupPin: '',
     }
+    let CHOICE1 = {
+        id: '',
+        text: 'Team A',
+        winningChoice: false,
+        betStake: [],
+    }
+    let CHOICE2 = {
+        id: '',
+        text: 'Team B',
+        winningChoice: false,
+        betStake: [],
+    }
+    let BET = {
+        id: '',
+        name: 'Who will win the match?',
+        isClosed: false,
+        openedBy: USER,
+        choices: [CHOICE1.text, CHOICE1.text],
+    }
+
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
         'http://localhost:3000'
     )
-    socket.connect()
 
-    beforeEach(async () => {
-        await resetTables()
-        // You might also want to re-seed initial data here if necessary
+    /* ;async () => {
+        await new Promise<void>((resolve) => {
+            // Ensure socket is connected before tests run
+            socket.once('connect', () => {
+                customLog(
+                    logLevel.info,
+                    service.websocket,
+                    'Socket connected for tests'
+                )
+                resolve()
+            })
+            socket.connect()
+        })
+    } */
+
+    beforeAll(async () => {
+        // await resetTables()
+        socket.connect()
     })
 
     // Use an afterAll hook to disconnect Prisma client after all tests in this suite are done
     afterAll(async () => {
-        await prisma.$disconnect()
-        socket.disconnect()
+        // Disconnect Prisma client
+        // await prisma.$disconnect()
+        // customLog(logLevel.info, service.database, 'Prisma client disconnected')
+
+        // Close the Socket.IO client connection
+        socket.close()
+        customLog(logLevel.info, service.websocket, 'Socket client closed')
+
+        // Close the HTTP server
+        await new Promise<void>((resolve, reject) => {
+            httpServer.close((err) => {
+                if (err) {
+                    customLog(
+                        logLevel.error,
+                        service.httpServer,
+                        `Error closing HTTP server: ${err}`
+                    )
+                    return reject(err)
+                }
+                customLog(
+                    logLevel.info,
+                    service.httpServer,
+                    'HTTP server closed.'
+                )
+                resolve()
+            })
+        })
     })
 
     it('Get ping response from backend', async () => {
@@ -61,9 +122,24 @@ describe('Main', () => {
         USER.groupPin = res.body.groupPin
     })
 
-    it('Join group via socket', async () => {
-        socket.emit('requestJoinGroup', USER.user_id, USER.groupPin)
+    it('Join group via socket', (done) => {
+        const map = new Map()
+        map.set('user_id', USER.user_id)
+        map.set('group_pin', USER.groupPin)
+        socket.emit('requestJoinGroup', JSON.stringify(map), (res) => {
+            expect(res).toBe(HttpStatusCode.OK)
+            done()
+        })
+    })
 
-        socket.on('responseJoinGroup', (msg) => {})
+    it('Create bet via socket', (done) => {
+        const map = new Map()
+        map.set('user_id', USER.user_id)
+        map.set('bet_name', BET.name)
+        map.set('bet_choices', BET.choices)
+        socket.emit('requestCreateBet', JSON.stringify(map), (res) => {
+            expect(res).toBe(HttpStatusCode.OK)
+            done()
+        })
     })
 })

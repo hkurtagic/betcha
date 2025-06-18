@@ -8480,7 +8480,7 @@ export namespace Prisma {
   }
 
   export type BetCreateInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     openedBy: UserCreateNestedOneWithoutBetInput
@@ -8489,7 +8489,7 @@ export namespace Prisma {
   }
 
   export type BetUncheckedCreateInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     userUser_id: string
@@ -8516,7 +8516,7 @@ export namespace Prisma {
   }
 
   export type BetCreateManyInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     userUser_id: string
@@ -8536,7 +8536,7 @@ export namespace Prisma {
   }
 
   export type ChoiceCreateInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     Bet?: BetCreateNestedOneWithoutChoicesInput
@@ -8544,7 +8544,7 @@ export namespace Prisma {
   }
 
   export type ChoiceUncheckedCreateInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     bet_id: string
@@ -8568,7 +8568,7 @@ export namespace Prisma {
   }
 
   export type ChoiceCreateManyInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     bet_id: string
@@ -9481,7 +9481,7 @@ export namespace Prisma {
   }
 
   export type BetCreateWithoutOpenedByInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     choices?: ChoiceCreateNestedManyWithoutBetInput
@@ -9489,7 +9489,7 @@ export namespace Prisma {
   }
 
   export type BetUncheckedCreateWithoutOpenedByInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     choices?: ChoiceUncheckedCreateNestedManyWithoutBetInput
@@ -9693,14 +9693,14 @@ export namespace Prisma {
   }
 
   export type ChoiceCreateWithoutBetInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     BetStake?: BetStakeCreateNestedManyWithoutChoiceInput
   }
 
   export type ChoiceUncheckedCreateWithoutBetInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     BetStake?: BetStakeUncheckedCreateNestedManyWithoutChoiceInput
@@ -9806,7 +9806,7 @@ export namespace Prisma {
   }
 
   export type BetCreateWithoutChoicesInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     openedBy: UserCreateNestedOneWithoutBetInput
@@ -9814,7 +9814,7 @@ export namespace Prisma {
   }
 
   export type BetUncheckedCreateWithoutChoicesInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     userUser_id: string
@@ -9912,7 +9912,7 @@ export namespace Prisma {
   }
 
   export type BetCreateWithoutBetStakeInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     openedBy: UserCreateNestedOneWithoutBetInput
@@ -9920,7 +9920,7 @@ export namespace Prisma {
   }
 
   export type BetUncheckedCreateWithoutBetStakeInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
     userUser_id: string
@@ -9933,14 +9933,14 @@ export namespace Prisma {
   }
 
   export type ChoiceCreateWithoutBetStakeInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     Bet?: BetCreateNestedOneWithoutChoicesInput
   }
 
   export type ChoiceUncheckedCreateWithoutBetStakeInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
     bet_id: string
@@ -10061,7 +10061,7 @@ export namespace Prisma {
   }
 
   export type BetCreateManyOpenedByInput = {
-    bet_id: string
+    bet_id?: string
     name: string
     isClosed: boolean
   }
@@ -10125,7 +10125,7 @@ export namespace Prisma {
   }
 
   export type ChoiceCreateManyBetInput = {
-    choice_id: string
+    choice_id?: string
     text: string
     winningChoice?: boolean
   }

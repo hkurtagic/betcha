@@ -3,20 +3,23 @@ import {
     ClientToServerEvents,
     ServerToClientEvents,
 } from './SocketConnectionTypes'
+import { customLog, logLevel, service } from './winston'
 
 let roomID = ''
 let myToken = ''
 
 const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-    'http://localhost:3000',
-    {
-        auth: {
-            token: myToken,
-        },
-    }
+    'http://localhost:8000'
     // { query: { myToken } }
 )
 socket.connect()
+socket.emit(
+    'requestJoinGroup',
+    JSON.stringify({ user_id: 'asdfasdf' }),
+    (res) => {
+        customLog(logLevel.info, service.websocket, `${res.status} ${res.msg}`)
+    }
+)
 // socket.emit('newUser', 'testName1')
 
 // socket.on('newUserAck', (userid, roomid) => {

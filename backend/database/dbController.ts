@@ -1,11 +1,13 @@
-import { Group, User } from '../model/models'
+import { Bet, Choice, Group, User } from '../model/models'
 import { customLog, logLevel } from '../winston'
 import { prisma } from '../main'
+import { Prisma } from '@prisma/client'
 
 /**
  * @description creates a Database controller
  */
 class DatabaseController {
+    db: any
     // #region Group
     public async createGroup(): Promise<Group> {
         return await prisma.group.create({ data: {} })
@@ -101,6 +103,96 @@ class DatabaseController {
         })
     }
     // #endregion User
+
+    // #region Bet
+    public async createBet(
+        bet_name: string,
+        user_id: string,
+        bet_choices: string[]
+    ): Promise<Bet> {
+        return await prisma.bet.create({
+            data: {
+                name: bet_name,
+                // Choices are now required, so this `createMany` will always run
+                choices: {
+                    createMany: {
+                        data: bet_choices.map((text) => ({ text: text })),
+                    },
+                },
+                isClosed: false,
+                openedBy: {
+                    connect: { user_id: user_id },
+                },
+            },
+            include: {
+                openedBy: true, // Ensure the full 'openedBy' User object is included
+                choices: true, // Include the created Choices in the result
+            },
+        })
+    }
+    /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {
+        return await this.db.all<Bet[]>(`SELECT * FROM Bet WHERE group_pin = ?`, [
+            group_pin,
+        ])
+    }
+
+    public async closeBet(bet_id: number): Promise<void> {
+        await this.db.run(`UPDATE Bet SET bet_closed = 1 WHERE bet_id = ?`, [bet_id])
+    }
+
+    public async getWinningChoiceOfBet(bet_id: number): Promise<string | undefined> {
+        const result = await this.db.get<{ choice_id: string }>(
+            `SELECT choice_id FROM Choice WHERE bet_id = ? AND winning_choice = 1`,
+            [bet_id]
+        )
+        return result?.choice_id
+    }
+
+    public async getUsersInBet(bet_id: number): Promise<User[]> {
+        return await this.db.all<User[]>(
+            `SELECT DISTINCT U.* FROM BetStake BS JOIN User U ON U.user_id = BS.user_id WHERE BS.bet_id = ?`,
+            [bet_id]
+        )
+    }
+    // #endregion Bet
+    // #region BetStakes
+    public async getBetStakes(bet_id: string): Promise<BetStake[]> {
+        return await this.db.all<BetStake[]>(
+            `SELECT * FROM BetStake WHERE bet_id = ?`,
+            [bet_id]
+        )
+    }
+
+    public async getStakesOnChoice(choice_id: string): Promise<ChoiceStake[]> {
+        return await this.db.all<ChoiceStake[]>(
+            `SELECT choice_id, SUM(amount) as total_amount FROM BetStake WHERE choice_id = ? GROUP BY choice_id`,
+            [choice_id]
+        )
+    }
+
+    public async setBetStake(
+        bet_id: string,
+        choice_id: string,
+        user_id: string,
+        amount: number
+    ): Promise<void> {
+        await this.db.run(
+            `INSERT INTO BetStake (bet_id, choice_id, user_id, amount) VALUES (?, ?, ?, ?)`,
+            [bet_id, choice_id, user_id, amount]
+        )
+    }
+
+    public async editBetStake(
+        choice_id: string,
+        user_id: string,
+        amount: number
+    ): Promise<void> {
+        await this.db.run(
+            `UPDATE BetStake SET amount = ? WHERE user_id = ? AND choice_id = ?`,
+            [amount, user_id, choice_id]
+        )
+    } */
+    // #endregion BetStakes
     /*
     // #region UserToken
     public async createUserToken(user_id: string, token: string): Promise<void> {

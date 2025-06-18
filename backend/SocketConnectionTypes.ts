@@ -1,17 +1,23 @@
 import { UUID } from 'crypto'
+import HttpStatusCode from './HTTPStatusCodes'
 
 /**
  * @description Client emit | Server listen events
  */
 interface ClientToServerEvents {
-    requestJoinGroup: (data: string) => void
+    requestJoinGroup: (
+        data: string,
+        callback: (msg: { status: HttpStatusCode; msg?: string }) => void
+    ) => void
+    requestCreateBet: (
+        data: string,
+        callback: (msg: { status: HttpStatusCode; msg?: string }) => void
+    ) => void
 }
 /**
  * @description Server emit | Client listen events
  */
-interface ServerToClientEvents {
-    responseJoinGroup: (message: string | Error) => void
-}
+interface ServerToClientEvents {}
 /**
  * @description Server to Server events
  */

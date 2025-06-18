@@ -34,7 +34,7 @@ model UserToken {
 }
 
 model Bet {
-  bet_id      String     @id
+  bet_id      String     @id @default(uuid())
   name        String
   isClosed    Boolean
   openedBy    User       @relation(fields: [userUser_id], references: [user_id])
@@ -44,7 +44,7 @@ model Bet {
 }
 
 model Choice {
-  choice_id     String     @id
+  choice_id     String     @id @default(uuid())
   text          String
   winningChoice Boolean    @default(false)
   bet_id        String
