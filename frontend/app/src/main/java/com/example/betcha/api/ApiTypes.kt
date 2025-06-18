@@ -3,7 +3,8 @@ package com.example.betcha.api
 data class ApiUser(
     var user_id: String,
     var name: String,
-    var groupPin: String
+    var groupPin: String,
+    var token: String?
 )
 
 data class ApiNewUser(

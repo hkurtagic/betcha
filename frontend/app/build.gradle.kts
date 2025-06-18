@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.androidx.room.runtime.android)
     implementation(libs.socket.io)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.material.icons.core)
+    implementation(libs.socket.io.client)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.com.google.devtools.ksp.gradle.plugin)

@@ -1,58 +1,125 @@
 package com.example.betcha.api
 
 import android.util.Log
-import dev.icerock.moko.socket.Socket
+import com.example.betcha.model.Bet
 import dev.icerock.moko.socket.SocketEvent
-import dev.icerock.moko.socket.SocketOptions
+import io.socket.client.IO
+import io.socket.client.Socket
+import io.socket.engineio.client.transports.Polling
+import io.socket.engineio.client.transports.WebSocket
+import jakarta.inject.Singleton
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import org.json.JSONArray
+import org.json.JSONObject
 
-//@Serializable
-//data class JoinGroupPayload(val user_id: String, val group_pin: String) {
-//    override fun toString(): String {
-//        return
-//    }
-//}
-
-val socket = Socket(
-    endpoint = "http://10.0.2.2:8000/",
-    config = SocketOptions(
-        queryParams = mapOf(),
-        transport = SocketOptions.Transport.DEFAULT
-    )
+@Singleton
+data class SocketOptions(
+    val queryParams: Map<String, String>?,
+    val transport: Transport = Transport.DEFAULT
 ) {
-    on(SocketEvent.Connect) {
-        println("connect")
+    enum class Transport {
+        WEBSOCKET,
+        POLLING,
+        DEFAULT
+    }
+}
+
+
+class Socket constructor(
+    endpoint: String,
+    config: SocketOptions?
+) {
+    private val socketIo: Socket
+
+    init {
+        socketIo = IO.socket(endpoint, IO.Options().apply {
+            transports = config?.transport?.let {
+                when (it) {
+                    SocketOptions.Transport.DEFAULT -> return@let null
+                    SocketOptions.Transport.WEBSOCKET -> return@let arrayOf(WebSocket.NAME)
+                    SocketOptions.Transport.POLLING -> return@let arrayOf(Polling.NAME)
+                }
+            }
+            query = config?.queryParams?.run {
+                if (size == 0) return@run null
+
+                val params: List<String> = map { (key, value) -> "$key=$value" }
+                params.joinToString("&")
+            }
+        })
+
+        socketIo.on("responseJoinGroup") { data ->
+            //val json = (Json { isLenient = true }).decodeFromString(String.serializer(), data)
+            Log.i("SocketIO | responseJoinGroup", data.toString())
+        }
+        socketIo.on("bet_update") { (args) ->
+            try {
+                val bets = Json.decodeFromString<List<Bet>>(args.toString())
+                SocketEventRegistry().onBetUpdate?.invoke(bets)
+            } catch (e: Exception) {
+                Log.e("Socket", "Failed to parse bet_update", e)
+            }
+        }
     }
 
-    on(SocketEvent.Connecting) {
-        println("connecting")
+    fun emit(event: String, data: String, callback: ((JSONObject) -> Unit)? = null) {
+        if (callback != null) {
+            socketIo.emit(event, data, callback)
+        } else {
+            socketIo.emit(event, data)
+        }
     }
 
-    on(SocketEvent.Disconnect) {
-        println("disconnect")
+    fun emit(event: String, data: JsonObject, callback: ((JSONObject) -> Unit)? = null) {
+        if (callback != null) {
+            socketIo.emit(event, JSONObject(data.toString()), callback)
+        } else {
+            socketIo.emit(event, JSONObject(data.toString()))
+        }
     }
 
-    on(SocketEvent.Error) {
-        println("error $it")
+    fun emit(event: String, data: JsonArray, callback: ((JSONObject) -> Unit)? = null) {
+        if (callback != null) {
+            socketIo.emit(event, JSONArray(data.toString()), callback)
+        } else {
+            socketIo.emit(event, JSONArray(data.toString()))
+        }
     }
 
-    on(SocketEvent.Reconnect) {
-        println("reconnect")
+    fun connect() {
+        socketIo.connect()
     }
 
-    on(SocketEvent.ReconnectAttempt) {
-        println("reconnect attempt $it")
+    fun disconnect() {
+        socketIo.disconnect()
     }
 
-    on(SocketEvent.Ping) {
-        println("ping")
+    fun isConnected(): Boolean {
+        return socketIo.connected()
     }
 
-    on(SocketEvent.Pong) {
-        println("pong")
+    fun on(event: String, action: (message: String) -> Unit) {
+        socketIo.on(event) {
+            action(it.toString())
+        }
     }
 
-    on("responseJoinGroup") { data: String ->
-        //val json = (Json { isLenient = true }).decodeFromString(String.serializer(), data)
-        Log.i("SocketIO | responseJoinGroup", data)
+    fun <T> on(
+        socketEvent: SocketEvent<T>,
+        action: (data: T) -> Unit
+    ) {
+        socketEvent.socketIoEvents.forEach { event ->
+            socketIo.on(event) { data ->
+                action(socketEvent.mapper(data))
+            }
+        }
     }
+
+
+//    fun addEvent(event: String, function: () -> Unit) {
+//        socketIo.on(event, function)
+//    }
+
 }
