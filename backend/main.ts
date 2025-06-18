@@ -174,9 +174,7 @@ async function checkIfUseIsBetOwner(
     }
 }
 
-async function checkIfChoiceIsWinning(
-    choice_id: string
-): Promise<boolean | null> {
+async function checkIfChoiceIsWinning(choice_id: string): Promise<boolean | null> {
     const state = (await dbController.getChoiceById(choice_id))?.winningChoice
     return state ? true : false
 }
@@ -433,6 +431,16 @@ async function main() {
                         status: HttpStatusCode.OK,
                         msg: JSON.stringify(betStake),
                     })
+                    let group_pin = (await dbController.getUserByID(user_id))?.groupPin!
+                    let bets = await dbController.getBetsInGroup(group_pin)
+                    bets.map((b) => delete b.openedBy)
+                    customLog(
+                        logLevel.debug,
+                        service.websocket,
+                        `${JSON.stringify(bets)}`
+                    )
+                    io.to(group_pin).emit('BetUpdate', JSON.stringify(bets))
+
                     return
                 }
             })
@@ -489,9 +497,7 @@ async function main() {
                 }
             })
             socket.on('requestSelectWinningChoice', async (data, callback) => {
-                const [user_id, choice_id] = Object.values(
-                    JSON.parse(data)
-                ) as string[]
+                const [user_id, choice_id] = Object.values(JSON.parse(data)) as string[]
 
                 if (!user_id || !choice_id) {
                     callback({
@@ -534,10 +540,7 @@ async function main() {
                     dbController.updateWinningChoice(choice_id)
                     const user = await dbController.getUserByID(user_id)
                     if (user?.groupPin) {
-                        io.to(user.groupPin).emit(
-                            'BetUpdate',
-                            JSON.stringify(user.Bet)
-                        )
+                        io.to(user.groupPin).emit('BetUpdate', JSON.stringify(user.Bet))
                         callback({
                             status: HttpStatusCode.OK,
                         })

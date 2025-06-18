@@ -67,9 +67,9 @@ data class ChoiceDTO(
         val percentage = if (stakes.isEmpty() || potSize == 0.0) {
             0.0
         } else {
-            stakes
+            (stakes
                 .filter { b -> b.choice_id == choice_id }
-                .sumOf { b -> b.amount } / potSize
+                .sumOf { b -> b.amount } / potSize) * 100
         }
         return Choice(
             choice_id = choice_id,
