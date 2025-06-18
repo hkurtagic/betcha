@@ -7,18 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.betcha.model.UserState
 import com.example.betcha.presentation.GroupScreen
 import com.example.betcha.presentation.HomeScreen
-import kotlinx.serialization.Serializable
-
-// Define a home route that doesn't take any arguments
-@Serializable
-object Home
-
-// Define a profile route that takes an ID
-@Serializable
-data class Group(val userState: UserState)
 
 sealed class Screen(val route: String) {
     data object HomeScreen : Screen(route = "home")
@@ -30,6 +20,7 @@ sealed class Screen(val route: String) {
 @Composable
 fun Navigation() {
     val navController = rememberNavController()
+//    val navBackStackEntry = remember(navController) { navController.getBackStackEntry("root") }
     NavHost(
         navController = navController,
         startDestination = Screen.HomeScreen.route,
@@ -38,7 +29,8 @@ fun Navigation() {
         composable(route = Screen.HomeScreen.route) {
             HomeScreen(
                 modifier = Modifier,
-                navController = navController
+                navController = navController,
+                //sessionViewModel = sessionViewModel
             )
         }
         composable(
@@ -47,12 +39,14 @@ fun Navigation() {
                 navArgument("userId") { type = NavType.StringType },
             )
         ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId")!!
-
+//            val userId = backStackEntry.arguments?.getString("userId")!!
+//            val parentEntry = remember(navController) { navController.getBackStackEntry("root") }
+//            val sessionViewModel: SessionViewModel = hiltViewModel(parentEntry)
             GroupScreen(
                 modifier = Modifier,
                 navController = navController,
-                userId = userId
+                //sessionViewModel = sessionViewModel
+                //userId = userId
             )
 
         }

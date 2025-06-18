@@ -1,5 +1,6 @@
 package com.example.betcha.presentation
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +42,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.betcha.R
 import com.example.betcha.model.HomeViewModel
+import com.example.betcha.model.SessionManager
 import com.example.betcha.ui.theme.BetchaTheme
 import kotlinx.coroutines.android.awaitFrame
 
@@ -46,20 +50,23 @@ import kotlinx.coroutines.android.awaitFrame
 fun HomeScreen(
     navController: NavController,
     modifier: Modifier,
-    homeViewModel: HomeViewModel = hiltViewModel()
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    //sessionViewModel: SessionViewModel
 ) {
 
     val state by homeViewModel.state.collectAsState()
+    val userState by homeViewModel.userState.collectAsState()
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(focusRequester) {
         awaitFrame()
         focusRequester.requestFocus()
     }
-    val userState by homeViewModel.userState.collectAsState()
+    //val session by sessionViewModel.sessionState.collectAsState()
     LaunchedEffect(userState.userId) {
+        Log.i("HomeUser", userState.userId)
         if (userState.userId != "") {
             Log.i("NewUserCompose", userState.toString())
-            homeViewModel.navigateToGroup(navController, userState)
+            homeViewModel.navigateToGroup(navController)
         }
     }
 
@@ -140,10 +147,12 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(0.6f),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text(text = if (state.groupPIN.text != "") "Join Group" else "Create Group",
-            style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = if (state.groupPIN.text != "") "Join Group" else "Create Group",
+                style = MaterialTheme.typography.labelLarge
+            )
             Icon(
-                painter = painterResource(R.drawable.play_arrow_24dp_black),
+                imageVector = Icons.Filled.PlayArrow, // painterResource(R.drawable.play_arrow_24dp_black),
                 contentDescription = if (state.groupPIN.text != "") "Join Group" else "Create Group"
             )
         }
@@ -152,10 +161,15 @@ fun HomeScreen(
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true, name = "HomeScreen", uiMode = UI_MODE_NIGHT_YES)
 @Composable
 fun HomeScreenPreview() {
     BetchaTheme {
-        HomeScreen(modifier = Modifier, navController = rememberNavController())
+        HomeScreen(
+            modifier = Modifier,
+            navController = rememberNavController(),
+            homeViewModel = HomeViewModel(SessionManager())
+        )
     }
 }

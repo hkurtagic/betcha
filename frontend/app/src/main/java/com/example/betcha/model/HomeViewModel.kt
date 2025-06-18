@@ -19,7 +19,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel(), DefaultLifecycleObserver {
+class HomeViewModel @Inject constructor(
+    //private val sessionViewModel: SessionViewModel
+    //private val sessionManager: SessionManager
+    private val sessionManager: SessionManager
+) :
+    ViewModel(),
+    DefaultLifecycleObserver {
     init {
         getRandomUsername()
     }
@@ -27,10 +33,10 @@ class HomeViewModel @Inject constructor() : ViewModel(), DefaultLifecycleObserve
     var groupPINError = mutableStateOf("")
     var usernameError = mutableStateOf("")
 
-    private val _userState = MutableStateFlow(UserState())
-    val userState: StateFlow<UserState>
+    private val _sessionState = sessionManager.sessionState
+    val userState: StateFlow<SessionState>
         get() {
-            return _userState.asStateFlow()
+            return _sessionState.asStateFlow()
         }
 
     private val _state = MutableStateFlow(
@@ -84,14 +90,9 @@ class HomeViewModel @Inject constructor() : ViewModel(), DefaultLifecycleObserve
                 )
                 if (response.isSuccessful) {
                     Log.i("res body", response.body().toString())
-                    _userState.update {
-                        it.copy(
-                            userId = response.body()!!.user_id,
-                            userName = response.body()!!.name,
-                            groupPin = response.body()!!.groupPin
-                        )
-                    }
-                    Log.i("NewUser", userState.value.toString())
+                    // _sessionState.up .updateSession(SessionState().fromApiUser(response.body()!!))
+                    _sessionState.update { sessionManager.fromApiUser(response.body()!!).sessionState.value }
+                    Log.i("NewUser", sessionManager.toString())
                 } else {
                     val errorMsg = response.errorBody()?.string()
                     Log.i("api error: ", "HTTP ${response.code()}: $errorMsg")
@@ -103,7 +104,7 @@ class HomeViewModel @Inject constructor() : ViewModel(), DefaultLifecycleObserve
     }
 
 
-    fun navigateToGroup(navController: NavController, userState: UserState) {
-        navController.navigate(Screen.GroupScreen.createRoute(userId = userState.userId))
+    fun navigateToGroup(navController: NavController) {
+        navController.navigate(Screen.GroupScreen.route)
     }
 }
