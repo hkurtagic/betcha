@@ -2,7 +2,6 @@ package com.example.betcha.presentation
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,23 +36,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.betcha.R
-import com.example.betcha.model.Bet
 import com.example.betcha.model.GroupViewModel
 import com.example.betcha.ui.theme.BetchaTheme
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun GroupScreen(
     modifier: Modifier,
     navController: NavController,
-    //userId: String,
     groupViewModel: GroupViewModel = hiltViewModel(),
-    //sessionViewModel: SessionViewModel
 ) {
-//    val userState by groupViewModel.userState.collectAsState()
-
-    //val session by sessionViewModel.sessionState.collectAsState()
     val userState by groupViewModel.userState.collectAsState()
     val betState by groupViewModel.bets.collectAsState()
     LaunchedEffect(userState.groupPin) {
@@ -61,7 +53,9 @@ fun GroupScreen(
             groupViewModel.joinGroupSocket(userState.userId, userState.groupPin)
         }
     }
+
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
                 colors = topAppBarColors(
@@ -69,7 +63,7 @@ fun GroupScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
 
                     ),
-                modifier = modifier
+                modifier = Modifier
                     .shadow(elevation = 4.dp),
                 title = {
                     Text(
@@ -86,11 +80,7 @@ fun GroupScreen(
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
-//                    Icon(
-//                        painter = painterResource(R.drawable.arrow_back_24dp_black),
-//                        tint = MaterialTheme.colorScheme.onPrimary,
-//                        contentDescription = stringResource(id = R.string.backAction_description)
-//                    )
+
                 },
                 actions = {
                     IconButton(onClick = { /* doSomething() */ }) {
@@ -103,42 +93,33 @@ fun GroupScreen(
                 },
             )
         },
-        bottomBar = {
-            // TODO: add FAB
-        },
         content = { innerPadding ->
             Column(
-                modifier = modifier
-                    .padding(innerPadding)
-//                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                modifier = Modifier.padding(innerPadding)
+
             ) {
-                //TODO: change card to BetCard
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(betState) { bet ->
                         BetCard(
-                            Bet(
-                                id = bet.id,
-                                text = bet.text,
-                                isActive = bet.isActive,
-                                potSize = bet.potSize,
-                                selections = bet.selections,
-                                myBet = bet.myBet
-                            )
-                        ) {}
+                            bet
+                        ) {
+                            //TODO: add BetStake setting
+
+                        }
                     }
                 }
-
             }
+
             CreateBetFab(onBetCreated = { betData ->
-                //betData.group_pin = userState.groupPin
-                //betData.user_id = userState.userId
                 groupViewModel.createBet(betData)
             })
+
+
         }
     )
 }

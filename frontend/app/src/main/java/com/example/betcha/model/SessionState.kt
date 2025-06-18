@@ -1,9 +1,9 @@
 package com.example.betcha.model
 
 import com.example.betcha.api.ApiUser
-import dagger.hilt.android.scopes.ActivityRetainedScoped
-import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
 //
 data class SessionState(
@@ -13,7 +13,7 @@ data class SessionState(
     var token: String? = null
 )
 
-@ActivityRetainedScoped
+@Singleton //@ActivityRetainedScoped
 class SessionManager @Inject constructor() {
     val sessionState = MutableStateFlow<SessionState>(SessionState())
 

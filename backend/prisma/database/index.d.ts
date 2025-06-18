@@ -4669,21 +4669,21 @@ export namespace Prisma {
     bet_id: string | null
     name: string | null
     isClosed: boolean | null
-    userUser_id: string | null
+    user_id: string | null
   }
 
   export type BetMaxAggregateOutputType = {
     bet_id: string | null
     name: string | null
     isClosed: boolean | null
-    userUser_id: string | null
+    user_id: string | null
   }
 
   export type BetCountAggregateOutputType = {
     bet_id: number
     name: number
     isClosed: number
-    userUser_id: number
+    user_id: number
     _all: number
   }
 
@@ -4692,21 +4692,21 @@ export namespace Prisma {
     bet_id?: true
     name?: true
     isClosed?: true
-    userUser_id?: true
+    user_id?: true
   }
 
   export type BetMaxAggregateInputType = {
     bet_id?: true
     name?: true
     isClosed?: true
-    userUser_id?: true
+    user_id?: true
   }
 
   export type BetCountAggregateInputType = {
     bet_id?: true
     name?: true
     isClosed?: true
-    userUser_id?: true
+    user_id?: true
     _all?: true
   }
 
@@ -4786,7 +4786,7 @@ export namespace Prisma {
     bet_id: string
     name: string
     isClosed: boolean
-    userUser_id: string
+    user_id: string
     _count: BetCountAggregateOutputType | null
     _min: BetMinAggregateOutputType | null
     _max: BetMaxAggregateOutputType | null
@@ -4810,7 +4810,7 @@ export namespace Prisma {
     bet_id?: boolean
     name?: boolean
     isClosed?: boolean
-    userUser_id?: boolean
+    user_id?: boolean
     openedBy?: boolean | UserDefaultArgs<ExtArgs>
     choices?: boolean | Bet$choicesArgs<ExtArgs>
     BetStake?: boolean | Bet$BetStakeArgs<ExtArgs>
@@ -4821,7 +4821,7 @@ export namespace Prisma {
     bet_id?: boolean
     name?: boolean
     isClosed?: boolean
-    userUser_id?: boolean
+    user_id?: boolean
     openedBy?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["bet"]>
 
@@ -4829,7 +4829,7 @@ export namespace Prisma {
     bet_id?: boolean
     name?: boolean
     isClosed?: boolean
-    userUser_id?: boolean
+    user_id?: boolean
     openedBy?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["bet"]>
 
@@ -4837,10 +4837,10 @@ export namespace Prisma {
     bet_id?: boolean
     name?: boolean
     isClosed?: boolean
-    userUser_id?: boolean
+    user_id?: boolean
   }
 
-  export type BetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"bet_id" | "name" | "isClosed" | "userUser_id", ExtArgs["result"]["bet"]>
+  export type BetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"bet_id" | "name" | "isClosed" | "user_id", ExtArgs["result"]["bet"]>
   export type BetInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     openedBy?: boolean | UserDefaultArgs<ExtArgs>
     choices?: boolean | Bet$choicesArgs<ExtArgs>
@@ -4865,7 +4865,7 @@ export namespace Prisma {
       bet_id: string
       name: string
       isClosed: boolean
-      userUser_id: string
+      user_id: string
     }, ExtArgs["result"]["bet"]>
     composites: {}
   }
@@ -5295,7 +5295,7 @@ export namespace Prisma {
     readonly bet_id: FieldRef<"Bet", 'String'>
     readonly name: FieldRef<"Bet", 'String'>
     readonly isClosed: FieldRef<"Bet", 'Boolean'>
-    readonly userUser_id: FieldRef<"Bet", 'String'>
+    readonly user_id: FieldRef<"Bet", 'String'>
   }
     
 
@@ -7981,7 +7981,7 @@ export namespace Prisma {
     bet_id: 'bet_id',
     name: 'name',
     isClosed: 'isClosed',
-    userUser_id: 'userUser_id'
+    user_id: 'user_id'
   };
 
   export type BetScalarFieldEnum = (typeof BetScalarFieldEnum)[keyof typeof BetScalarFieldEnum]
@@ -8192,7 +8192,7 @@ export namespace Prisma {
     bet_id?: StringFilter<"Bet"> | string
     name?: StringFilter<"Bet"> | string
     isClosed?: BoolFilter<"Bet"> | boolean
-    userUser_id?: StringFilter<"Bet"> | string
+    user_id?: StringFilter<"Bet"> | string
     openedBy?: XOR<UserScalarRelationFilter, UserWhereInput>
     choices?: ChoiceListRelationFilter
     BetStake?: BetStakeListRelationFilter
@@ -8202,7 +8202,7 @@ export namespace Prisma {
     bet_id?: SortOrder
     name?: SortOrder
     isClosed?: SortOrder
-    userUser_id?: SortOrder
+    user_id?: SortOrder
     openedBy?: UserOrderByWithRelationInput
     choices?: ChoiceOrderByRelationAggregateInput
     BetStake?: BetStakeOrderByRelationAggregateInput
@@ -8215,7 +8215,7 @@ export namespace Prisma {
     NOT?: BetWhereInput | BetWhereInput[]
     name?: StringFilter<"Bet"> | string
     isClosed?: BoolFilter<"Bet"> | boolean
-    userUser_id?: StringFilter<"Bet"> | string
+    user_id?: StringFilter<"Bet"> | string
     openedBy?: XOR<UserScalarRelationFilter, UserWhereInput>
     choices?: ChoiceListRelationFilter
     BetStake?: BetStakeListRelationFilter
@@ -8225,7 +8225,7 @@ export namespace Prisma {
     bet_id?: SortOrder
     name?: SortOrder
     isClosed?: SortOrder
-    userUser_id?: SortOrder
+    user_id?: SortOrder
     _count?: BetCountOrderByAggregateInput
     _max?: BetMaxOrderByAggregateInput
     _min?: BetMinOrderByAggregateInput
@@ -8238,7 +8238,7 @@ export namespace Prisma {
     bet_id?: StringWithAggregatesFilter<"Bet"> | string
     name?: StringWithAggregatesFilter<"Bet"> | string
     isClosed?: BoolWithAggregatesFilter<"Bet"> | boolean
-    userUser_id?: StringWithAggregatesFilter<"Bet"> | string
+    user_id?: StringWithAggregatesFilter<"Bet"> | string
   }
 
   export type ChoiceWhereInput = {
@@ -8492,7 +8492,7 @@ export namespace Prisma {
     bet_id?: string
     name: string
     isClosed: boolean
-    userUser_id: string
+    user_id: string
     choices?: ChoiceUncheckedCreateNestedManyWithoutBetInput
     BetStake?: BetStakeUncheckedCreateNestedManyWithoutBetInput
   }
@@ -8510,7 +8510,7 @@ export namespace Prisma {
     bet_id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     isClosed?: BoolFieldUpdateOperationsInput | boolean
-    userUser_id?: StringFieldUpdateOperationsInput | string
+    user_id?: StringFieldUpdateOperationsInput | string
     choices?: ChoiceUncheckedUpdateManyWithoutBetNestedInput
     BetStake?: BetStakeUncheckedUpdateManyWithoutBetNestedInput
   }
@@ -8519,7 +8519,7 @@ export namespace Prisma {
     bet_id?: string
     name: string
     isClosed: boolean
-    userUser_id: string
+    user_id: string
   }
 
   export type BetUpdateManyMutationInput = {
@@ -8532,7 +8532,7 @@ export namespace Prisma {
     bet_id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     isClosed?: BoolFieldUpdateOperationsInput | boolean
-    userUser_id?: StringFieldUpdateOperationsInput | string
+    user_id?: StringFieldUpdateOperationsInput | string
   }
 
   export type ChoiceCreateInput = {
@@ -8789,21 +8789,21 @@ export namespace Prisma {
     bet_id?: SortOrder
     name?: SortOrder
     isClosed?: SortOrder
-    userUser_id?: SortOrder
+    user_id?: SortOrder
   }
 
   export type BetMaxOrderByAggregateInput = {
     bet_id?: SortOrder
     name?: SortOrder
     isClosed?: SortOrder
-    userUser_id?: SortOrder
+    user_id?: SortOrder
   }
 
   export type BetMinOrderByAggregateInput = {
     bet_id?: SortOrder
     name?: SortOrder
     isClosed?: SortOrder
-    userUser_id?: SortOrder
+    user_id?: SortOrder
   }
 
   export type BetNullableScalarRelationFilter = {
@@ -9594,7 +9594,7 @@ export namespace Prisma {
     bet_id?: StringFilter<"Bet"> | string
     name?: StringFilter<"Bet"> | string
     isClosed?: BoolFilter<"Bet"> | boolean
-    userUser_id?: StringFilter<"Bet"> | string
+    user_id?: StringFilter<"Bet"> | string
   }
 
   export type BetStakeUpsertWithWhereUniqueWithoutUserInput = {
@@ -9817,7 +9817,7 @@ export namespace Prisma {
     bet_id?: string
     name: string
     isClosed: boolean
-    userUser_id: string
+    user_id: string
     BetStake?: BetStakeUncheckedCreateNestedManyWithoutBetInput
   }
 
@@ -9870,7 +9870,7 @@ export namespace Prisma {
     bet_id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     isClosed?: BoolFieldUpdateOperationsInput | boolean
-    userUser_id?: StringFieldUpdateOperationsInput | string
+    user_id?: StringFieldUpdateOperationsInput | string
     BetStake?: BetStakeUncheckedUpdateManyWithoutBetNestedInput
   }
 
@@ -9923,7 +9923,7 @@ export namespace Prisma {
     bet_id?: string
     name: string
     isClosed: boolean
-    userUser_id: string
+    user_id: string
     choices?: ChoiceUncheckedCreateNestedManyWithoutBetInput
   }
 
@@ -10001,7 +10001,7 @@ export namespace Prisma {
     bet_id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     isClosed?: BoolFieldUpdateOperationsInput | boolean
-    userUser_id?: StringFieldUpdateOperationsInput | string
+    user_id?: StringFieldUpdateOperationsInput | string
     choices?: ChoiceUncheckedUpdateManyWithoutBetNestedInput
   }
 

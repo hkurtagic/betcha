@@ -198,12 +198,28 @@ class DatabaseController {
             where: { user_id: user_id, bet_id: bet_id },
         })
     }
+
+    public async getBetsInGroup(group_pin: string): Promise<Bet[]> {
+        return await prisma.bet.findMany({
+            where: {
+                openedBy: {
+                    groupPin: group_pin,
+                },
+            },
+            include: {
+                openedBy: true, // Ensure the full 'openedBy' User object is included
+                choices: true, // Include the created Choices in the result
+                BetStake: true,
+            },
+        })
+    }
+
     /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {
         return await this.db.all<Bet[]>(`SELECT * FROM Bet WHERE group_pin = ?`, [
             group_pin,
         ])
     }
-
+    /* 
     public async closeBet(bet_id: number): Promise<void> {
         await this.db.run(`UPDATE Bet SET bet_closed = 1 WHERE bet_id = ?`, [bet_id])
     }

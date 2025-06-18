@@ -72,11 +72,11 @@ async function checkIfUserExists(
         return new Error('No username or userid provided')
     try {
         if (user_id) {
-            return (await dbController.getUserByID(user_id)) === null
+            return (await dbController.getUserByID(user_id)) !== null
                 ? true
                 : false
         } else if (user_name) {
-            return (await dbController.getUserByName(user_name)) === null
+            return (await dbController.getUserByName(user_name)) !== null
                 ? true
                 : false
         } else {
@@ -255,6 +255,9 @@ async function main() {
                 `Outgoing Socket data: ${event} \n ${args}`
             )
         })
+        socket.onAny((event, ...args) => {
+            console.log('Received event:', event)
+        })
         if (socket.recovered) {
             // recovery was successful: socket.id, socket.rooms and socket.data were restored
             customLog(
@@ -339,7 +342,8 @@ async function main() {
                         })
                         return
                     }
-                    if (await checkIfUserExists(user_id)) {
+
+                    if (!(await checkIfUserExists(user_id))) {
                         callback({
                             status: HttpStatusCode.BAD_REQUEST,
                             msg: 'user_id does not exist',
@@ -354,15 +358,19 @@ async function main() {
                     )
                     console.log(bet)
                     if (bet) {
+                        customLog(logLevel.debug, service.websocket, `${bet}`)
+                        callback({ status: HttpStatusCode.OK })
+                        let group_pin = (
+                            await dbController.getUserByID(user_id)
+                        )?.groupPin!
+                        let bets = await dbController.getBetsInGroup(group_pin)
+                        bets.map((b) => delete b.openedBy)
                         customLog(
                             logLevel.debug,
                             service.websocket,
-                            `${JSON.stringify(bet)}`
+                            `${JSON.stringify(bets)}`
                         )
-                        callback({
-                            status: HttpStatusCode.OK,
-                            msg: JSON.stringify(bet),
-                        })
+                        io.to(group_pin).emit('BetUpdate', JSON.stringify(bets))
                         return
                     }
                 } catch (error) {
@@ -383,7 +391,7 @@ async function main() {
                     return
                 }
 
-                if (await checkIfUserExists(user_id)) {
+                if (!(await checkIfUserExists(user_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'user_id does not exist',
@@ -454,7 +462,7 @@ async function main() {
                     return
                 }
 
-                if (await checkIfUserExists(user_id)) {
+                if (!(await checkIfUserExists(user_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'user_id does not exist',

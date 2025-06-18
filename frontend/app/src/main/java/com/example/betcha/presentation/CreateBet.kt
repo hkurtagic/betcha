@@ -16,22 +16,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
-import kotlinx.serialization.Serializable
+import com.example.betcha.repository.BetCreationData
+import kotlinx.coroutines.android.awaitFrame
 
-@Serializable
-data class BetCreationData(
-    //var group_pin: String = "",
-    var user_id: String = "",
-    val text: String,
-    val selections: List<String>
-)
 
 @Composable
 fun CreateBetDialog(
@@ -40,6 +36,11 @@ fun CreateBetDialog(
 ) {
     var text by remember { mutableStateOf("") }
     var selections by remember { mutableStateOf(listOf("", "")) } // min 2 selections
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(focusRequester) {
+        awaitFrame()
+        focusRequester.requestFocus()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -97,7 +98,10 @@ fun CreateBetFab(onBetCreated: (BetCreationData) -> Unit) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         FloatingActionButton(
-            onClick = { showDialog = true },
+            onClick = {
+                showDialog = true
+                //onBetCreated(BetCreationData(text = "a", selections = listOf("11", "22")))
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)

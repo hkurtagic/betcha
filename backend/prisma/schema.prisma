@@ -20,7 +20,7 @@ model Group {
 model User {
   user_id   String      @id @default(uuid())
   name      String      @unique
-  groupPin  String      
+  groupPin  String
   group     Group?      @relation(fields: [groupPin], references: [pin])
   UserToken UserToken[]
   Bet       Bet[]
@@ -34,13 +34,13 @@ model UserToken {
 }
 
 model Bet {
-  bet_id      String     @id @default(uuid())
-  name        String
-  isClosed    Boolean
-  openedBy    User       @relation(fields: [userUser_id], references: [user_id])
-  choices     Choice[]
-  userUser_id String
-  BetStake    BetStake[]
+  bet_id   String     @id @default(uuid())
+  name     String
+  isClosed Boolean
+  openedBy User       @relation(fields: [user_id], references: [user_id])
+  choices  Choice[]
+  user_id  String
+  BetStake BetStake[]
 }
 
 model Choice {
