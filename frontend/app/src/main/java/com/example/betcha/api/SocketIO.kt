@@ -1,19 +1,17 @@
 package com.example.betcha.api
 
 import android.util.Log
-import com.example.betcha.model.Bet
 import dev.icerock.moko.socket.SocketEvent
 import io.socket.client.Ack
 import io.socket.client.IO
 import io.socket.client.Socket
 import io.socket.engineio.client.transports.Polling
 import io.socket.engineio.client.transports.WebSocket
-import jakarta.inject.Singleton
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import org.json.JSONArray
 import org.json.JSONObject
+import javax.inject.Singleton
 
 @Singleton
 data class SocketOptions(
@@ -28,7 +26,7 @@ data class SocketOptions(
 }
 
 
-class Socket constructor(
+class Socket(
     endpoint: String,
     config: SocketOptions?
 ) {
@@ -52,17 +50,16 @@ class Socket constructor(
         })
 
         socketIo.on("responseJoinGroup") { data ->
-            //val json = (Json { isLenient = true }).decodeFromString(String.serializer(), data)
             Log.i("SocketIO | responseJoinGroup", data.toString())
         }
-        socketIo.on("bet_update") { (args) ->
-            try {
-                val bets = Json.decodeFromString<List<Bet>>(args.toString())
-                SocketEventRegistry().onBetUpdate?.invoke(bets)
-            } catch (e: Exception) {
-                Log.e("Socket", "Failed to parse bet_update", e)
-            }
-        }
+//        socketIo.on("bet_update") { (args) ->
+//            try {
+//                val bets = Json.decodeFromString<List<Bet>>(args.toString())
+//                SocketEventRegistry().onBetUpdate?.invoke(bets)
+//            } catch (e: Exception) {
+//                Log.e("bet_update", "Failed to parse bet_update", e)
+//            }
+//        }
     }
 
     fun emit(event: String, data: String, callback: ((JSONObject) -> Unit)? = null) {
@@ -111,9 +108,9 @@ class Socket constructor(
         return socketIo.connected()
     }
 
-    fun on(event: String, action: (message: String) -> Unit) {
+    fun on(event: String, action: (message: Any) -> Unit) {
         socketIo.on(event) {
-            action(it.toString())
+            action(it)
         }
     }
 

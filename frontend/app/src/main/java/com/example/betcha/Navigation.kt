@@ -38,7 +38,7 @@ fun Navigation() {
             arguments = listOf(
                 navArgument("userId") { type = NavType.StringType },
             )
-        ) { backStackEntry ->
+        ) { //backStackEntry ->
 //            val userId = backStackEntry.arguments?.getString("userId")!!
 //            val parentEntry = remember(navController) { navController.getBackStackEntry("root") }
 //            val sessionViewModel: SessionViewModel = hiltViewModel(parentEntry)

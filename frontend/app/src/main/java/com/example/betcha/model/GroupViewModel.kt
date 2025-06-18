@@ -3,13 +3,14 @@ package com.example.betcha.model
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
-import com.example.betcha.api.BetRepository
+import androidx.lifecycle.viewModelScope
 import com.example.betcha.api.Socket
-import com.example.betcha.presentation.BetCreationData
+import com.example.betcha.repository.BetCreationData
+import com.example.betcha.repository.BetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -29,15 +30,15 @@ class GroupViewModel @Inject constructor(
             return _sessionState.asStateFlow()
         }
 
-    private val _bets = MutableStateFlow<List<Bet>>(emptyList())
-    val bets: StateFlow<List<Bet>> = _bets
+    val bets = betRepository.bets
 
-    init {
-        //getUserData(userId)
-        betRepository.subscribeToBetUpdates { updated ->
-            _bets.value = updated
-        }
-    }
+//    init {
+//        //getUserData(userId)
+//        betRepository.subscribeToBetUpdates { updated ->
+//            _bets.value = updated
+//
+//        }
+//    }
 
 
 //    fun getUserData(userId: String) {
@@ -65,23 +66,26 @@ class GroupViewModel @Inject constructor(
         )
         Log.i("groupJoin", jsonPayload)
         socket.emit("requestJoinGroup", jsonPayload, callback = { response ->
+
             Log.i("socket join", response.toString())
         })
     }
 
     fun createBet(betData: BetCreationData) {
         //betData.group_pin = _sessionState.value.groupPin
-        betData.user_id = _sessionState.value.groupPin
-        //betRepository.sendNewBet(betData)
-        val json = Json.encodeToString(betData)
-        Log.i("bet repo", json)
-        socket.emit(
-            "requestCreateBet",
-            json,
-            callback = { response ->
-                Log.i("bet creation", response.toString())
-            }
-        )
+        viewModelScope.launch {
+            betData.user_id = _sessionState.value.userId
+            betRepository.sendNewBet(betData)
+        }
+//        val json = Json.encodeToString(betData)
+//        Log.i("bet repo", json)
+//        socket.emit(
+//            "requestCreateBet",
+//            json,
+//            callback = { response ->
+//                Log.i("bet creation", response.toString())
+//            }
+//        )
     }
 
 

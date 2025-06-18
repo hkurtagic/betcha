@@ -50,8 +50,7 @@ import kotlinx.coroutines.android.awaitFrame
 fun HomeScreen(
     navController: NavController,
     modifier: Modifier,
-    homeViewModel: HomeViewModel = hiltViewModel(),
-    //sessionViewModel: SessionViewModel
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
 
     val state by homeViewModel.state.collectAsState()
@@ -61,7 +60,7 @@ fun HomeScreen(
         awaitFrame()
         focusRequester.requestFocus()
     }
-    //val session by sessionViewModel.sessionState.collectAsState()
+    
     LaunchedEffect(userState.userId) {
         Log.i("HomeUser", userState.userId)
         if (userState.userId != "") {

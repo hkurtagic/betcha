@@ -20,8 +20,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    //private val sessionViewModel: SessionViewModel
-    //private val sessionManager: SessionManager
     private val sessionManager: SessionManager
 ) :
     ViewModel(),
@@ -88,14 +86,26 @@ class HomeViewModel @Inject constructor(
                         user_name = _state.value.username.text.toString()
                     )
                 )
-                if (response.isSuccessful) {
-                    Log.i("res body", response.body().toString())
-                    // _sessionState.up .updateSession(SessionState().fromApiUser(response.body()!!))
-                    _sessionState.update { sessionManager.fromApiUser(response.body()!!).sessionState.value }
-                    Log.i("NewUser", sessionManager.toString())
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Log.i("api error: ", "HTTP ${response.code()}: $errorMsg")
+                when (response.code()) {
+                    in 200..300 -> {
+                        //Log.i("res body", response.body().toString())
+                        // _sessionState.up .updateSession(SessionState().fromApiUser(response.body()!!))
+                        _sessionState.update { sessionManager.fromApiUser(response.body()!!).sessionState.value }
+                        Log.i("NewUser", sessionManager.toString())
+                    }
+
+                    400 -> {
+                        usernameError.value = "Username missing"
+                    }
+
+                    406 -> {
+                        groupPINError.value = "Group does not exist!"
+                    }
+
+                    else -> {
+                        val errorMsg = response.errorBody()?.string()
+                        Log.i("api error: ", "HTTP ${response.code()}: $errorMsg")
+                    }
                 }
             } catch (e: Exception) {
                 Log.i("api error: ", "Network error: ${e.localizedMessage}")

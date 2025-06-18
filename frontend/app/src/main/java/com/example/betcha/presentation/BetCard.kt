@@ -27,9 +27,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.betcha.model.Bet
-import com.example.betcha.model.MyBet
-import com.example.betcha.model.Selection
+import com.example.betcha.repository.Bet
+import com.example.betcha.repository.BetStake
+import com.example.betcha.repository.Choice
 
 @Composable
 fun SelectionButton(
@@ -114,18 +114,18 @@ fun BetCard(bet: Bet, onClick: () -> Unit) {
         //.background(MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(text = bet.text, style = MaterialTheme.typography.titleMedium)
+            Text(text = bet.name, style = MaterialTheme.typography.titleMedium)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Total in Pot: ${bet.potSize}")
+            //Text("Total in Pot: ${bet.potSize}")
 
-            if (bet.isActive) {
+            if (!bet.isClosed) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                bet.selections.forEach { selection ->
+                bet.choices.forEach { selection ->
                     SelectionButton(
-                        text = selection.label,
+                        text = selection.text,
                         percentage = selection.percentage,
                         //TODO: add setstake
                         onClick = {}
@@ -133,8 +133,9 @@ fun BetCard(bet: Bet, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                bet.myBet?.let {
-                    val selectedLabel = bet.selections.find { s -> s.id == it.selectionId }?.label
+                bet.MyBet?.let {
+                    val selectedLabel =
+                        bet.choices.find { s -> s.choice_id == it.choice_id }?.text
                     Text("Your Bet: ${it.amount} on $selectedLabel")
                 }
             } else {
@@ -162,17 +163,21 @@ fun BetCard(bet: Bet, onClick: () -> Unit) {
 @Preview
 @Composable
 fun PreviewBetCard() {
+    val stake = BetStake(user_id = "1", bet_id = "1", amount = 100.00, choice_id = "1")
     val sampleBet = Bet(
-        id = "1",
-        text = "Who will win the match?",
-        isActive = true,
-        potSize = 1200,
-        selections = listOf(
-            Selection("1", "Team A", 99.0f),
-            Selection("2", "Team B", 35.0f)
+        user_id = "1",
+        name = "Who will win the match?",
+        isClosed = false,
+        potSize = 1200.00,
+        choices = listOf(
+            Choice("1", "Team A", false, 99.0f),
+            Choice("2", "Team B", false, 35.0f)
         ),
-        myBet = MyBet("1", 100)
+        MyBet = stake,
+        bet_id = "1",
+        BetStakes = listOf(stake),
+        concludedInfo = null
     )
 
-    BetCard(bet = sampleBet,{})
+    BetCard(bet = sampleBet, {})
 }
