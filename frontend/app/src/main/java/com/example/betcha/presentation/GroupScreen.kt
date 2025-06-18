@@ -106,11 +106,11 @@ fun GroupScreen(
                 ) {
                     items(betState) { bet ->
                         BetCard(
-                            bet
-                        ) {
-                            //TODO: add BetStake setting
+                            bet, onChoiceClick = { betStake ->
+                                groupViewModel.updateStake(betStake)
+                            }
+                        )
 
-                        }
                     }
                 }
             }

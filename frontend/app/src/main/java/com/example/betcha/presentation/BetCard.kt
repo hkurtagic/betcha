@@ -20,6 +20,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,15 +37,16 @@ import com.example.betcha.repository.Choice
 
 @Composable
 fun SelectionButton(
+    choice_id: String,
     text: String,
     percentage: Float,
-    onClick: () -> Unit
+    onChoiceClick: (String) -> Unit
 ) {
     val clampedPercentage = percentage.coerceIn(0f, 100f) / 100f
     val shape = RoundedCornerShape(8.dp)
 
     Button(
-        onClick = onClick,
+        onClick = { onChoiceClick(choice_id) },
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
@@ -104,7 +109,9 @@ fun SelectionButton(
 
 // TODO: onClick open details
 @Composable
-fun BetCard(bet: Bet, onClick: () -> Unit) {
+fun BetCard(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedChoice by remember { mutableStateOf("") }
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -113,6 +120,19 @@ fun BetCard(bet: Bet, onClick: () -> Unit) {
             .padding(8.dp)
         //.background(MaterialTheme.colorScheme.secondaryContainer)
     ) {
+        if (showDialog) {
+            BetDetails(
+                bet,
+                choice = bet.choices.find { c -> c.choice_id == selectedChoice }!!,
+                onDismiss = { showDialog = false },
+                onConfirmBet = {
+                    onChoiceClick(it)
+                    showDialog = false
+                }
+            )
+        }
+
+
         Column(Modifier.padding(16.dp)) {
             Text(text = bet.name, style = MaterialTheme.typography.titleMedium)
 
@@ -125,10 +145,13 @@ fun BetCard(bet: Bet, onClick: () -> Unit) {
 
                 bet.choices.forEach { selection ->
                     SelectionButton(
+                        choice_id = selection.choice_id,
                         text = selection.text,
                         percentage = selection.percentage,
-                        //TODO: add setstake
-                        onClick = {}
+                        onChoiceClick = {
+                            showDialog = true
+                            selectedChoice = it
+                        }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -150,9 +173,9 @@ fun BetCard(bet: Bet, onClick: () -> Unit) {
 
                 if (bet.concludedInfo != null) {
                     if (bet.concludedInfo.didWin) {
-                        Text("🎉 You won ${bet.concludedInfo.winnings} coins!", color = Color.Green)
+                        Text("You won ${bet.concludedInfo.winnings}!", color = Color.Green)
                     } else {
-                        Text("😢 You lost your bet", color = Color.Red)
+                        Text("You lost your bet", color = Color.Red)
                     }
                 }
             }

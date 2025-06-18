@@ -18,6 +18,7 @@ interface BetRepository {
 
     //fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit)
     fun sendNewBet(bet: BetCreationData)
+    fun sendStake(stake: BetStake)
 }
 
 
@@ -108,7 +109,7 @@ data class Choice(
 @Serializable
 @JsonIgnoreUnknownKeys
 data class BetStake(
-    val user_id: String,
+    var user_id: String,
     val bet_id: String,
     val choice_id: String,
     val amount: Double
@@ -197,4 +198,17 @@ class BetRepositoryImpl @Inject constructor(
             }
         )
     }
+
+    override fun sendStake(stake: BetStake) {
+        val json = Json.encodeToString(stake)
+        Log.i("send stake", json)
+        socket.emit(
+            "requestCreateBetStake",
+            json,
+            callback = { response ->
+                Log.i("bet stake creation", response.toString())
+            }
+        )
+    }
+
 }

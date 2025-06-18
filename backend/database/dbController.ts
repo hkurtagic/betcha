@@ -62,10 +62,7 @@ class DatabaseController {
     // #endregion Group
     */
     // #region User
-    public async createUser(
-        user_name: string,
-        group_pin: string
-    ): Promise<User> {
+    public async createUser(user_name: string, group_pin: string): Promise<User> {
         return await prisma.user.create({
             data: { name: user_name, groupPin: group_pin },
         })
@@ -86,10 +83,7 @@ class DatabaseController {
         return await prisma.user.delete({ where: { user_id: user_id } })
     }
 
-    public async updateUsernameByID(
-        user_id: string,
-        user_name: string
-    ): Promise<User> {
+    public async updateUsernameByID(user_id: string, user_name: string): Promise<User> {
         return await prisma.user.update({
             where: { user_id: user_id },
             data: { name: user_name },
@@ -113,30 +107,52 @@ class DatabaseController {
         user_id: string,
         bet_choices: string[]
     ): Promise<Bet | null> {
-        const bet = await prisma.bet.create({
+        return await prisma.bet.create({
             data: {
                 name: bet_name,
-                isClosed: false,
-                openedBy: {
-                    connect: {
-                        user_id: user_id,
+                // Choices are now required, so this `createMany` will always run
+                choices: {
+                    createMany: {
+                        data: bet_choices.map((text) => ({ text: text })),
                     },
                 },
+                isClosed: false,
+                openedBy: {
+                    connect: { user_id: user_id },
+                },
+            },
+            include: {
+                openedBy: true, // Ensure the full 'openedBy' User object is included
+                choices: true, // Include the created Choices in the result
             },
         })
+        // const bet = await prisma.bet.create({
+        //     data: {
+        //         name: bet_name,
+        //         isClosed: false,
+        //         openedBy: {
+        //             connect: {
+        //                 user_id: user_id,
+        //             },
+        //         },
+        //     },
+        //     include: {
+        //         openedBy: true,
+        //     },
+        // })
 
-        const choices = await prisma.choice.createMany({
-            data: [
-                ...bet_choices.map((text) => ({
-                    text: text,
-                    bet_id: bet.bet_id,
-                })),
-            ],
-        })
+        // const choices = await prisma.choice.createMany({
+        //     data: [
+        //         ...bet_choices.map((text) => ({
+        //             text: text,
+        //             bet_id: bet.bet_id,
+        //         })),
+        //     ],
+        // })
 
-        return await prisma.bet.findUnique({
-            where: { bet_id: bet.bet_id },
-        })
+        // return await prisma.bet.findUnique({
+        //     where: { bet_id: bet.bet_id },
+        // })
     }
 
     public async getBetById(bet_id: string): Promise<Bet | null> {

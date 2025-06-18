@@ -42,11 +42,7 @@ async function resetTables() {
         await prisma.bet.deleteMany({})
         await prisma.user.deleteMany({})
         await prisma.group.deleteMany({})
-        customLog(
-            logLevel.warn,
-            service.database,
-            'All tables wiped (see .env)'
-        )
+        customLog(logLevel.warn, service.database, 'All tables wiped (see .env)')
     } catch (error) {
         customLog(
             logLevel.error,
@@ -68,17 +64,12 @@ async function checkIfUserExists(
     user_id?: string,
     user_name?: string
 ): Promise<boolean | Error> {
-    if (!user_id && !user_name)
-        return new Error('No username or userid provided')
+    if (!user_id && !user_name) return new Error('No username or userid provided')
     try {
         if (user_id) {
-            return (await dbController.getUserByID(user_id)) !== null
-                ? true
-                : false
+            return (await dbController.getUserByID(user_id)) !== null ? true : false
         } else if (user_name) {
-            return (await dbController.getUserByName(user_name)) !== null
-                ? true
-                : false
+            return (await dbController.getUserByName(user_name)) !== null ? true : false
         } else {
             return new Error(
                 'Unexpected condition: Neither user_id nor user_name was processed'
@@ -86,9 +77,7 @@ async function checkIfUserExists(
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
@@ -96,9 +85,7 @@ async function checkIfBetExists(bet_id: string): Promise<boolean | Error> {
     if (!bet_id) return new Error('No bet_id provided')
     try {
         if (bet_id) {
-            return (await dbController.getBetById(bet_id)) === null
-                ? true
-                : false
+            return (await dbController.getBetById(bet_id)) !== null ? true : false
         } else {
             return new Error(
                 'Unexpected condition: Neither user_id nor user_name was processed'
@@ -106,21 +93,15 @@ async function checkIfBetExists(bet_id: string): Promise<boolean | Error> {
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
-async function checkIfChoiceExists(
-    choice_id: string
-): Promise<boolean | Error> {
+async function checkIfChoiceExists(choice_id: string): Promise<boolean | Error> {
     if (!choice_id) return new Error('No bet_id provided')
     try {
         if (choice_id) {
-            return (await dbController.getChoiceById(choice_id)) === null
-                ? true
-                : false
+            return (await dbController.getChoiceById(choice_id)) !== null ? true : false
         } else {
             return new Error(
                 'Unexpected condition: Neither user_id nor user_name was processed'
@@ -128,9 +109,7 @@ async function checkIfChoiceExists(
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
@@ -141,12 +120,8 @@ async function checkIfBetAlreadyPlaced(
     if (!user_id && !bet_id) return new Error('No bet_id or userid provided')
     try {
         if (user_id) {
-            return (await dbController.getBetStakeByNameAndBet(
-                user_id,
-                bet_id
-            )) == null
-                ? true
-                : false
+            let s = await dbController.getBetStakeByNameAndBet(user_id, bet_id)
+            return s !== null && s?.length > 0 ? true : false
         } else {
             return new Error(
                 'Unexpected condition: Neither user_id nor user_name was processed'
@@ -154,9 +129,7 @@ async function checkIfBetAlreadyPlaced(
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
@@ -164,7 +137,7 @@ async function checkIfBetIsOpen(bet_id: string): Promise<boolean | Error> {
     if (!bet_id) return new Error('No bet_id provided')
     try {
         if (bet_id) {
-            return (await dbController.getBetById(bet_id))?.isClosed === true
+            return (await dbController.getBetById(bet_id))?.isClosed !== true
                 ? true
                 : false
         } else {
@@ -174,9 +147,7 @@ async function checkIfBetIsOpen(bet_id: string): Promise<boolean | Error> {
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
@@ -199,20 +170,14 @@ async function checkIfUseIsBetOwner(
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
 const httpServer = createServer(app)
 
 httpServer.listen(PORT, () => {
-    customLog(
-        logLevel.info,
-        'httpServer',
-        `Listen on http://${process.env.IP}:${PORT}`
-    )
+    customLog(logLevel.info, 'httpServer', `Listen on http://${process.env.IP}:${PORT}`)
 })
 
 async function main() {
@@ -287,9 +252,7 @@ async function main() {
                         `Socket data: ${user_id} ${group_pin} from ${data}`
                     )
                     const checkUserId = await dbController.getUserByID(user_id)
-                    const checkGroupPin = await dbController.getGroupByPIN(
-                        group_pin
-                    )
+                    const checkGroupPin = await dbController.getGroupByPIN(group_pin)
                     const errors = new Map()
 
                     if (checkGroupPin == null)
@@ -313,8 +276,7 @@ async function main() {
                             (value, key) => (msg.name = `${msg.name}, ${key}`)
                         )
                         errors.forEach(
-                            (value, key) =>
-                                (msg.message = `${msg.message}, ${value}`)
+                            (value, key) => (msg.message = `${msg.message}, ${value}`)
                         )
                         msg.name.substring(2)
                         msg.message.substring(2)
@@ -360,9 +322,8 @@ async function main() {
                     if (bet) {
                         customLog(logLevel.debug, service.websocket, `${bet}`)
                         callback({ status: HttpStatusCode.OK })
-                        let group_pin = (
-                            await dbController.getUserByID(user_id)
-                        )?.groupPin!
+                        let group_pin = (await dbController.getUserByID(user_id))
+                            ?.groupPin!
                         let bets = await dbController.getBetsInGroup(group_pin)
                         bets.map((b) => delete b.openedBy)
                         customLog(
@@ -379,7 +340,7 @@ async function main() {
             })
 
             socket.on('requestCreateBetStake', async (data, callback) => {
-                const [user_id, choice_id, bet_id, amount] = Object.values(
+                const [user_id, bet_id, choice_id, amount] = Object.values(
                     JSON.parse(data)
                 ) as string[]
 
@@ -391,6 +352,25 @@ async function main() {
                     return
                 }
 
+                customLog(
+                    logLevel.debug,
+                    'requestCreateBetStake',
+                    `${JSON.stringify(JSON.parse(data))}\n` +
+                        `checkIfUserExists(user_id) = ${await checkIfUserExists(
+                            user_id
+                        )} \n` +
+                        `checkIfChoiceExists(choice_id) = ${await checkIfChoiceExists(
+                            choice_id
+                        )} \n` +
+                        `await checkIfBetIsOpen(bet_id) = ${await checkIfBetIsOpen(
+                            bet_id
+                        )} \n` +
+                        `await checkIfBetAlreadyPlaced(user_id, bet_id) ${await checkIfBetAlreadyPlaced(
+                            user_id,
+                            bet_id
+                        )}`
+                )
+
                 if (!(await checkIfUserExists(user_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
@@ -398,27 +378,28 @@ async function main() {
                     })
                     return
                 }
-                if (await checkIfChoiceExists(choice_id)) {
+                if (!(await checkIfChoiceExists(choice_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'choice_id does not exist',
                     })
                     return
                 }
-                if (await checkIfBetExists(bet_id)) {
+                if (!(await checkIfBetExists(bet_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'bet_id does not exist',
                     })
                     return
                 }
-                if (await checkIfBetIsOpen(bet_id)) {
+                if (!(await checkIfBetIsOpen(bet_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'bet already closed',
                     })
                     return
                 }
+                // TODO: handle BetStake update if it already exists (only same choice)
                 if (await checkIfBetAlreadyPlaced(user_id, bet_id)) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
@@ -450,9 +431,7 @@ async function main() {
             })
 
             socket.on('requestCloseBet', async (data, callback) => {
-                const [user_id, bet_id] = Object.values(
-                    JSON.parse(data)
-                ) as string[]
+                const [user_id, bet_id] = Object.values(JSON.parse(data)) as string[]
 
                 if (!user_id || !bet_id) {
                     callback({
@@ -486,10 +465,7 @@ async function main() {
                     return
                 }
 
-                const bet = await dbController.updateBetClosingStateById(
-                    bet_id,
-                    true
-                )
+                const bet = await dbController.updateBetClosingStateById(bet_id, true)
 
                 console.log(bet)
                 if (bet) {

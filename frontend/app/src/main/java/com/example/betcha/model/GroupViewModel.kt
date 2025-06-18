@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.betcha.api.Socket
 import com.example.betcha.repository.BetCreationData
 import com.example.betcha.repository.BetRepository
+import com.example.betcha.repository.BetStake
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -86,6 +87,13 @@ class GroupViewModel @Inject constructor(
 //                Log.i("bet creation", response.toString())
 //            }
 //        )
+    }
+
+    fun updateStake(betStake: BetStake) {
+        viewModelScope.launch {
+            betStake.user_id = _sessionState.value.userId
+            betRepository.sendStake(betStake)
+        }
     }
 
 
