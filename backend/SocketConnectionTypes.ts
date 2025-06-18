@@ -22,6 +22,10 @@ interface ClientToServerEvents {
         data: string,
         callback: (msg: { status: HttpStatusCode; msg?: string }) => void
     ) => void
+    requestSelectWinningChoice: (
+        data: string,
+        callback: (msg: { status: HttpStatusCode; msg?: string }) => void
+    ) => void
 }
 /**
  * @description Server emit | Client listen events

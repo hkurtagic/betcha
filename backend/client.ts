@@ -118,8 +118,8 @@ import { databaseController } from './database/dbController'
                     )
                 }
             )
-
             temp.clear()
+
             temp.set('user_id', user.user_id)
             //@ts-ignore
             temp.set('bet_id', user.Bet[0].choices[0].bet_id)
@@ -138,8 +138,32 @@ import { databaseController } from './database/dbController'
                     )
                 }
             )
+            temp.clear()
+
+            temp.set('user_id', user.user_id)
+            //@ts-ignore
+            temp.set('choice_id', user.Bet[0].choices[0].choice_id)
+            socket.emit(
+                'requestSelectWinningChoice',
+                JSON.stringify(Object.fromEntries(temp)),
+                (res) => {
+                    customLog(
+                        logLevel.info,
+                        service.websocket,
+                        `${res.status} ${
+                            res.msg
+                                ? `requestSelectWinningChoice: ${res.msg}`
+                                : 'requestSelectWinningChoice: No message'
+                        }`
+                    )
+                }
+            )
         }
     )
+
+    socket.on('BetUpdate', (data) => {
+        customLog(logLevel.info, service.websocket, `${data}`)
+    })
     // socket.emit('newUser', 'testName1')
 
     // socket.on('newUserAck', (userid, roomid) => {

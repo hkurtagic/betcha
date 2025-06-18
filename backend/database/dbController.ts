@@ -172,6 +172,15 @@ class DatabaseController {
         })
     }
 
+    public async updateWinningChoice(
+        choice_id: string
+    ): Promise<Choice | null> {
+        return await prisma.choice.update({
+            where: { choice_id: choice_id },
+            data: { winningChoice: true },
+        })
+    }
+
     public async createBetStake(
         user_id: string,
         bet_id: string,
@@ -203,6 +212,7 @@ class DatabaseController {
     public async getChoiceById(choice_id: string): Promise<Choice | null> {
         return await prisma.choice.findUnique({
             where: { choice_id: choice_id },
+            include: { Bet: { include: { openedBy: true } } },
         })
     }
 

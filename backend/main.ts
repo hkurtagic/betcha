@@ -174,6 +174,13 @@ async function checkIfUseIsBetOwner(
     }
 }
 
+async function checkIfChoiceIsWinning(
+    choice_id: string
+): Promise<boolean | null> {
+    const state = (await dbController.getChoiceById(choice_id))?.winningChoice
+    return state ? true : false
+}
+
 const httpServer = createServer(app)
 
 httpServer.listen(PORT, () => {
@@ -479,6 +486,69 @@ async function main() {
                         msg: JSON.stringify(bet),
                     })
                     return
+                }
+            })
+            socket.on('requestSelectWinningChoice', async (data, callback) => {
+                const [user_id, choice_id] = Object.values(
+                    JSON.parse(data)
+                ) as string[]
+
+                if (!user_id || !choice_id) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user_id or choice_id not provided',
+                    })
+                    return
+                }
+
+                if (!(await checkIfUserExists(user_id))) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user_id does not exist',
+                    })
+                    return
+                }
+                if (await checkIfChoiceExists(choice_id)) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'choice_id does not exist',
+                    })
+                    return
+                }
+                //TODO: Autoclose Bet if not closed already
+                if (!(await checkIfChoiceIsWinning(choice_id))) {
+                    await dbController.updateWinningChoice(choice_id)
+                }
+                const bet = await dbController.getChoiceById(choice_id)
+                const betOwner = bet?.Bet?.openedBy?.user_id
+
+                console.log(`${JSON.stringify(bet)}`)
+
+                if (betOwner !== user_id) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user must be bet owner',
+                    })
+                    return
+                } else {
+                    dbController.updateWinningChoice(choice_id)
+                    const user = await dbController.getUserByID(user_id)
+                    if (user?.groupPin) {
+                        io.to(user.groupPin).emit(
+                            'BetUpdate',
+                            JSON.stringify(user.Bet)
+                        )
+                        callback({
+                            status: HttpStatusCode.OK,
+                        })
+                        return
+                    } else {
+                        callback({
+                            status: HttpStatusCode.BAD_REQUEST,
+                            msg: 'Could not emit to other clients',
+                        })
+                        return
+                    }
                 }
             })
         }
