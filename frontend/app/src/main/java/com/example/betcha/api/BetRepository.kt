@@ -22,10 +22,15 @@ class BetRepositoryImpl @Inject constructor(
         eventRegistry.onBetUpdate = onUpdate
     }
 
-    override fun sendNewBet(data: BetCreationData) {
-        val json = Json.encodeToString(data)
-        socket.emit("create_bet", json) { response ->
-            Log.i("socket", response.toString())
-        }
+    override fun sendNewBet(bet: BetCreationData) {
+        val json = Json.encodeToString(bet)
+        Log.i("bet repo", json)
+        socket.emit(
+            "requestCreateBet",
+            json,
+            callback = { response ->
+                Log.i("bet creation", response.toString())
+            }
+        )
     }
 }

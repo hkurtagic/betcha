@@ -3,6 +3,7 @@ package com.example.betcha.api
 import android.util.Log
 import com.example.betcha.model.Bet
 import dev.icerock.moko.socket.SocketEvent
+import io.socket.client.Ack
 import io.socket.client.IO
 import io.socket.client.Socket
 import io.socket.engineio.client.transports.Polling
@@ -66,7 +67,11 @@ class Socket constructor(
 
     fun emit(event: String, data: String, callback: ((JSONObject) -> Unit)? = null) {
         if (callback != null) {
-            socketIo.emit(event, data, callback)
+            socketIo.emit(event, data, Ack {
+                val ackData = it[0]
+                Log.i("emit", ackData.toString())
+                callback(ackData as JSONObject)
+            })
         } else {
             socketIo.emit(event, data)
         }
@@ -74,7 +79,10 @@ class Socket constructor(
 
     fun emit(event: String, data: JsonObject, callback: ((JSONObject) -> Unit)? = null) {
         if (callback != null) {
-            socketIo.emit(event, JSONObject(data.toString()), callback)
+            socketIo.emit(event, arrayOf(JSONObject(data.toString())), Ack {
+                val ackData = it[0]
+                callback(ackData as JSONObject)
+            })
         } else {
             socketIo.emit(event, JSONObject(data.toString()))
         }
@@ -82,7 +90,10 @@ class Socket constructor(
 
     fun emit(event: String, data: JsonArray, callback: ((JSONObject) -> Unit)? = null) {
         if (callback != null) {
-            socketIo.emit(event, JSONArray(data.toString()), callback)
+            socketIo.emit(event, JSONArray(data.toString()), Ack {
+                val ackData = it[0]
+                callback(ackData as JSONObject)
+            })
         } else {
             socketIo.emit(event, JSONArray(data.toString()))
         }

@@ -1,7 +1,6 @@
 import { Bet, Choice, Group, User } from '../model/models'
 import { customLog, logLevel } from '../winston'
 import { prisma } from '../main'
-import { Prisma } from '@prisma/client'
 
 /**
  * @description creates a Database controller
@@ -62,10 +61,7 @@ class DatabaseController {
     // #endregion Group
     */
     // #region User
-    public async createUser(
-        user_name: string,
-        group_pin: string
-    ): Promise<User> {
+    public async createUser(user_name: string, group_pin: string): Promise<User> {
         return await prisma.user.create({
             data: { name: user_name, groupPin: group_pin },
         })
@@ -83,10 +79,7 @@ class DatabaseController {
         return await prisma.user.delete({ where: { user_id: user_id } })
     }
 
-    public async updateUsernameByID(
-        user_id: string,
-        user_name: string
-    ): Promise<User> {
+    public async updateUsernameByID(user_id: string, user_name: string): Promise<User> {
         return await prisma.user.update({
             where: { user_id: user_id },
             data: { name: user_name },

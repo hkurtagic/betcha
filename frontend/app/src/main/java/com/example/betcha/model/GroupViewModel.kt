@@ -1,5 +1,6 @@
 package com.example.betcha.model
 
+import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
 import com.example.betcha.api.BetRepository
@@ -62,13 +63,25 @@ class GroupViewModel @Inject constructor(
         val jsonPayload = Json.encodeToString(
             mapOf("user_id" to userId, "group_pin" to groupPin)
         )
-        socket.emit("requestJoinGroup", jsonPayload)
+        Log.i("groupJoin", jsonPayload)
+        socket.emit("requestJoinGroup", jsonPayload, callback = { response ->
+            Log.i("socket join", response.toString())
+        })
     }
 
     fun createBet(betData: BetCreationData) {
-        betData.groupPin = _sessionState.value.groupPin
-        betData.userId = _sessionState.value.groupPin
-        betRepository.sendNewBet(betData)
+        //betData.group_pin = _sessionState.value.groupPin
+        betData.user_id = _sessionState.value.groupPin
+        //betRepository.sendNewBet(betData)
+        val json = Json.encodeToString(betData)
+        Log.i("bet repo", json)
+        socket.emit(
+            "requestCreateBet",
+            json,
+            callback = { response ->
+                Log.i("bet creation", response.toString())
+            }
+        )
     }
 
 

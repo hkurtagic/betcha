@@ -134,11 +134,11 @@ fun GroupScreen(
                 }
 
             }
-            CreateBetFab { betData ->
-                betData.groupPin = userState.groupPin
-                betData.userId = userState.userId
+            CreateBetFab(onBetCreated = { betData ->
+                //betData.group_pin = userState.groupPin
+                //betData.user_id = userState.userId
                 groupViewModel.createBet(betData)
-            }
+            })
         }
     )
 }

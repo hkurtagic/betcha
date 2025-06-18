@@ -23,10 +23,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BetCreationData(
-    var groupPin: String = "",
-    var userId: String = "",
+    //var group_pin: String = "",
+    var user_id: String = "",
     val text: String,
     val selections: List<String>
 )
