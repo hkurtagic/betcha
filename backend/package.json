@@ -7,7 +7,7 @@
     "scripts": {
         "clean": "rimraf build/*.js --glob",
         "start:dev": "nodemon main.ts",
-        "test:dev": "npx ts-node ./client.ts",
+        "test:dev": "nodemon client.ts",
         "tsc": "tsc --project tsconfig.json",
         "build": "npm run clean && npm run tsc",
         "start": "npm run build && node build/main.js",

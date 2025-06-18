@@ -36,10 +36,10 @@ function generatePIN(pinLength: number = 8): string {
  */
 async function resetTables() {
     try {
-        await prisma.betStake.deleteMany({})
-        await prisma.userToken.deleteMany({})
         await prisma.choice.deleteMany({})
         await prisma.bet.deleteMany({})
+        await prisma.betStake.deleteMany({})
+        await prisma.userToken.deleteMany({})
         await prisma.user.deleteMany({})
         await prisma.group.deleteMany({})
         customLog(
@@ -77,6 +77,48 @@ async function checkIfUserExists(
                 : false
         } else if (user_name) {
             return (await dbController.getUserByName(user_name)) === null
+                ? true
+                : false
+        } else {
+            return new Error(
+                'Unexpected condition: Neither user_id nor user_name was processed'
+            )
+        }
+    } catch (error) {
+        if (error instanceof Error) return error
+        return new Error(
+            'An unknown error occurred while checking user existence'
+        )
+    }
+}
+
+async function checkIfBetExists(bet_id?: string): Promise<boolean | Error> {
+    if (!bet_id) return new Error('No bet_id provided')
+    try {
+        if (bet_id) {
+            return (await dbController.getBetById(bet_id)) === null
+                ? true
+                : false
+        } else {
+            return new Error(
+                'Unexpected condition: Neither user_id nor user_name was processed'
+            )
+        }
+    } catch (error) {
+        if (error instanceof Error) return error
+        return new Error(
+            'An unknown error occurred while checking user existence'
+        )
+    }
+}
+
+async function checkIfChoiceExists(
+    choice_id?: string
+): Promise<boolean | Error> {
+    if (!choice_id) return new Error('No bet_id provided')
+    try {
+        if (choice_id) {
+            return (await dbController.getChoiceById(choice_id)) === null
                 ? true
                 : false
         } else {
@@ -241,12 +283,76 @@ async function main() {
                     )
                     console.log(bet)
                     if (bet) {
-                        customLog(logLevel.debug, service.websocket, `${bet}`)
-                        callback({ status: HttpStatusCode.OK })
+                        customLog(
+                            logLevel.debug,
+                            service.websocket,
+                            `${JSON.stringify(bet)}`
+                        )
+                        callback({
+                            status: HttpStatusCode.OK,
+                            msg: JSON.stringify(bet),
+                        })
                         return
                     }
                 } catch (error) {
                     customLog(logLevel.error, service.websocket, `${error}`)
+                }
+            })
+
+            socket.on('requestCreateBetStake', async (data, callback) => {
+                const [user_id, choice_id, bet_id, amount] = Object.values(
+                    JSON.parse(data)
+                ) as string[]
+
+                if (!user_id || !choice_id || !bet_id || !amount) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user_id, choice_id, bet_id or amount not provided',
+                    })
+                    return
+                }
+
+                if (await checkIfUserExists(user_id)) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'user_id does not exist',
+                    })
+                    return
+                }
+                if (await checkIfChoiceExists(choice_id)) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'choice_id does not exist',
+                    })
+                    return
+                }
+                if (await checkIfBetExists(bet_id)) {
+                    callback({
+                        status: HttpStatusCode.BAD_REQUEST,
+                        msg: 'bet_id does not exist',
+                    })
+                    return
+                }
+
+                const betStake = await dbController.createBetStake(
+                    user_id,
+                    bet_id,
+                    choice_id,
+                    Number(amount)
+                )
+
+                console.log(betStake)
+                if (betStake) {
+                    customLog(
+                        logLevel.debug,
+                        service.websocket,
+                        `${JSON.stringify(betStake)}`
+                    )
+                    callback({
+                        status: HttpStatusCode.OK,
+                        msg: JSON.stringify(betStake),
+                    })
+                    return
                 }
             })
         }

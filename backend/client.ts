@@ -4,9 +4,8 @@ import {
     ServerToClientEvents,
 } from './SocketConnectionTypes'
 import { customLog, logLevel, service } from './winston'
-import { app } from './app'
 import { User } from './model/models'
-import { log } from 'console'
+import { databaseController } from './database/dbController'
 ;(async () => {
     async function getName() {
         try {
@@ -29,8 +28,16 @@ import { log } from 'console'
                 }),
             })
             const data = await res.json()
-            console.log(data)
 
+            return data
+        } catch (error) {
+            console.error(error)
+        }
+    }
+    async function getUser(user_id: string) {
+        try {
+            const res = await fetch(`http://localhost:8000/user/` + user_id)
+            const data = await res.json()
             return data
         } catch (error) {
             console.error(error)
@@ -46,14 +53,14 @@ import { log } from 'console'
     )
     socket.connect()
     let name: string = await getName()
-    const map = new Map()
+    const temp = new Map()
     let user: User = await createUser(name)
 
-    map.set('user_id', user.user_id)
-    map.set('group_pin', user.groupPin)
+    temp.set('user_id', user.user_id)
+    temp.set('group_pin', user.groupPin)
     socket.emit(
         'requestJoinGroup',
-        JSON.stringify(Object.fromEntries(map)),
+        JSON.stringify(Object.fromEntries(temp)),
         (res) => {
             customLog(
                 logLevel.info,
@@ -66,14 +73,16 @@ import { log } from 'console'
             )
         }
     )
+    temp.clear()
 
-    map.delete('group_pin')
-    map.set('bet_name', 'Who wins the match?')
-    map.set('choices', ['test1', 'test2'])
+    temp.set('user_id', user.user_id)
+    temp.set('bet_name', 'Who wins the match?')
+    temp.set('choices', ['test1', 'test2'])
+
     socket.emit(
         'requestCreateBet',
-        JSON.stringify(Object.fromEntries(map)),
-        (res) => {
+        JSON.stringify(Object.fromEntries(temp)),
+        async (res) => {
             customLog(
                 logLevel.info,
                 service.websocket,
@@ -82,6 +91,32 @@ import { log } from 'console'
                         ? `requestCreateBet: ${res.msg}`
                         : 'requestCreateBet: No message'
                 }`
+            )
+
+            user = await getUser(user.user_id)
+            console.log(user)
+
+            temp.clear()
+            temp.set('user_id', user.user_id)
+            //@ts-ignore
+            temp.set('choice_id', user.Bet[0].choices[0].choice_id)
+            //@ts-ignore
+            temp.set('bet_id', user.Bet[0].choices[0].bet_id)
+            temp.set('amount', 100)
+            socket.emit(
+                'requestCreateBetStake',
+                JSON.stringify(Object.fromEntries(temp)),
+                (res) => {
+                    customLog(
+                        logLevel.info,
+                        service.websocket,
+                        `${res.status} ${
+                            res.msg
+                                ? `requestCreateBetStake: ${res.msg}`
+                                : 'requestCreateBetStake: No message'
+                        }`
+                    )
+                }
             )
         }
     )

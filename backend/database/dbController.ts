@@ -1,4 +1,4 @@
-import { Bet, Choice, Group, User } from '../model/models'
+import { Bet, BetStake, Choice, Group, User } from '../model/models'
 import { customLog, logLevel } from '../winston'
 import { prisma } from '../main'
 import { Prisma } from '@prisma/client'
@@ -73,7 +73,10 @@ class DatabaseController {
     }
 
     public async getUserByID(user_id: string): Promise<User | null> {
-        return await prisma.user.findUnique({ where: { user_id: user_id } })
+        return await prisma.user.findUnique({
+            where: { user_id: user_id },
+            include: { Bet: { include: { choices: true, BetStake: true } } },
+        })
     }
 
     public async getUserByName(user_name: string): Promise<User | null> {
@@ -136,6 +139,44 @@ class DatabaseController {
             where: { bet_id: bet.bet_id },
         })
     }
+
+    public async getBetById(bet_id: string): Promise<Bet | null> {
+        return await prisma.bet.findUnique({ where: { bet_id: bet_id } })
+    }
+
+    public async createBetStake(
+        user_id: string,
+        bet_id: string,
+        choice_id: string,
+        amount: number
+    ): Promise<BetStake | null> {
+        return await prisma.betStake.create({
+            data: {
+                amount: amount,
+                User: {
+                    connect: {
+                        user_id: user_id,
+                    },
+                },
+                Bet: {
+                    connect: {
+                        bet_id: bet_id,
+                    },
+                },
+                Choice: {
+                    connect: {
+                        choice_id: choice_id,
+                    },
+                },
+            },
+        })
+    }
+
+    public async getChoiceById(choice_id: string): Promise<Choice | null> {
+        return await prisma.choice.findUnique({
+            where: { choice_id: choice_id },
+        })
+    }
     /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {
         return await this.db.all<Bet[]>(`SELECT * FROM Bet WHERE group_pin = ?`, [
             group_pin,
@@ -188,16 +229,7 @@ class DatabaseController {
         )
     }
 
-    public async editBetStake(
-        choice_id: string,
-        user_id: string,
-        amount: number
-    ): Promise<void> {
-        await this.db.run(
-            `UPDATE BetStake SET amount = ? WHERE user_id = ? AND choice_id = ?`,
-            [amount, user_id, choice_id]
-        )
-    } */
+     */
     // #endregion BetStakes
     /*
     // #region UserToken

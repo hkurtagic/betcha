@@ -13,6 +13,10 @@ interface ClientToServerEvents {
         data: string,
         callback: (msg: { status: HttpStatusCode; msg?: string }) => void
     ) => void
+    requestCreateBetStake: (
+        data: string,
+        callback: (msg: { status: HttpStatusCode; msg?: string }) => void
+    ) => void
 }
 /**
  * @description Server emit | Client listen events
