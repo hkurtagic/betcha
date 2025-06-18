@@ -42,7 +42,11 @@ async function resetTables() {
         await prisma.bet.deleteMany({})
         await prisma.user.deleteMany({})
         await prisma.group.deleteMany({})
-        customLog(logLevel.warn, service.database, 'All tables wiped (see .env)')
+        customLog(
+            logLevel.warn,
+            service.database,
+            'All tables wiped (see .env)'
+        )
     } catch (error) {
         customLog(
             logLevel.error,
@@ -64,12 +68,17 @@ async function checkIfUserExists(
     user_id?: string,
     user_name?: string
 ): Promise<boolean | Error> {
-    if (!user_id && !user_name) return new Error('No username or userid provided')
+    if (!user_id && !user_name)
+        return new Error('No username or userid provided')
     try {
         if (user_id) {
-            return (await dbController.getUserByID(user_id)) === null ? true : false
+            return (await dbController.getUserByID(user_id)) === null
+                ? true
+                : false
         } else if (user_name) {
-            return (await dbController.getUserByName(user_name)) === null ? true : false
+            return (await dbController.getUserByName(user_name)) === null
+                ? true
+                : false
         } else {
             return new Error(
                 'Unexpected condition: Neither user_id nor user_name was processed'
@@ -77,14 +86,20 @@ async function checkIfUserExists(
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error('An unknown error occurred while checking user existence')
+        return new Error(
+            'An unknown error occurred while checking user existence'
+        )
     }
 }
 
 const httpServer = createServer(app)
 
 httpServer.listen(PORT, () => {
-    customLog(logLevel.info, 'httpServer', `Listen on http://${process.env.IP}:${PORT}`)
+    customLog(
+        logLevel.info,
+        'httpServer',
+        `Listen on http://${process.env.IP}:${PORT}`
+    )
 })
 
 async function main() {
@@ -137,79 +152,102 @@ async function main() {
         } else {
             // let user join group OR create group if not already exist
             socket.on('requestJoinGroup', async (data, callback) => {
-                const [user_id, group_pin] = Object.values(JSON.parse(data)) as string[]
-                console.log(data)
-                console.log(callback)
-                if (user_id === undefined || group_pin === undefined) {
-                    callback({
-                        status: HttpStatusCode.BAD_REQUEST,
-                        msg: JSON.stringify('user_id and group_pin needed'),
-                    })
+                try {
+                    const [user_id, group_pin] = Object.values(
+                        JSON.parse(data)
+                    ) as string[]
+                    if (user_id === undefined || group_pin === undefined) {
+                        callback({
+                            status: HttpStatusCode.BAD_REQUEST,
+                            msg: JSON.stringify('user_id and group_pin needed'),
+                        })
 
-                    return
-                }
-
-                customLog(
-                    logLevel.debug,
-                    'requestJoinGroup',
-                    `Socket data: ${user_id} ${group_pin} from ${data}`
-                )
-                const checkUserId = await dbController.getUserByID(user_id)
-                const checkGroupPin = await dbController.getGroupByPIN(group_pin)
-                const errors = new Map()
-
-                if (checkGroupPin == null)
-                    errors.set('emptyGroupPin', 'No group pin passed')
-                if (checkUserId == null) errors.set('emptyUserId', 'No user id passed')
-                // if (checkUserId != null && checkUserId.name != null)
-                //     errors.set('userIdIsEqual', 'User ids are not equal')
-
-                if (errors.size === 0) {
-                    socket.join(group_pin)
-                    callback({ status: HttpStatusCode.OK })
-                } else {
-                    const msg: Error = {
-                        name: '',
-                        message: '',
+                        return
                     }
 
-                    errors.forEach((value, key) => (msg.name = `${msg.name}, ${key}`))
-                    errors.forEach(
-                        (value, key) => (msg.message = `${msg.message}, ${value}`)
+                    customLog(
+                        logLevel.debug,
+                        'requestJoinGroup',
+                        `Socket data: ${user_id} ${group_pin} from ${data}`
                     )
-                    msg.name.substring(2)
-                    msg.message.substring(2)
-                    callback({
-                        status: HttpStatusCode.BAD_REQUEST,
-                        msg: JSON.stringify(msg),
-                    })
+                    const checkUserId = await dbController.getUserByID(user_id)
+                    const checkGroupPin = await dbController.getGroupByPIN(
+                        group_pin
+                    )
+                    const errors = new Map()
+
+                    if (checkGroupPin == null)
+                        errors.set('emptyGroupPin', 'No group pin passed')
+                    if (checkUserId == null)
+                        errors.set('emptyUserId', 'No user id passed')
+                    // if (checkUserId != null && checkUserId.name != null)
+                    //     errors.set('userIdIsEqual', 'User ids are not equal')
+
+                    if (errors.size === 0) {
+                        socket.join(group_pin)
+                        callback({ status: HttpStatusCode.OK })
+                        return
+                    } else {
+                        const msg: Error = {
+                            name: '',
+                            message: '',
+                        }
+
+                        errors.forEach(
+                            (value, key) => (msg.name = `${msg.name}, ${key}`)
+                        )
+                        errors.forEach(
+                            (value, key) =>
+                                (msg.message = `${msg.message}, ${value}`)
+                        )
+                        msg.name.substring(2)
+                        msg.message.substring(2)
+                        callback({
+                            status: HttpStatusCode.BAD_REQUEST,
+                            msg: JSON.stringify(msg),
+                        })
+                        return
+                    }
+                } catch (error) {
+                    customLog(logLevel.error, service.websocket, `${error}`)
                 }
             })
 
             socket.on('requestCreateBet', async (data, callback) => {
-                const [user_id, bet_name, bet_choice] = Object.values(
-                    JSON.parse(data)
-                ) as string[]
-                console.log(JSON.parse(data))
-                console.log(bet_choice)
-                if (!user_id || !bet_name || !bet_choice)
-                    callback({
-                        status: HttpStatusCode.BAD_REQUEST,
-                        msg: 'user_id, bet_name or bet_choice not provided',
-                    })
-                if (!(await checkIfUserExists(user_id)))
-                    callback({
-                        status: HttpStatusCode.BAD_REQUEST,
-                        msg: 'user_id does not exist',
-                    })
+                try {
+                    const [user_id, bet_name, bet_choice] = Object.values(
+                        JSON.parse(data)
+                    ) as string[]
 
-                const bet = await dbController.createBet(
-                    bet_name,
-                    user_id,
-                    bet_choice as unknown as string[]
-                )
-                customLog(logLevel.debug, service.websocket, `${bet}`)
-                callback({ status: HttpStatusCode.OK })
+                    if (!user_id || !bet_name || !bet_choice) {
+                        callback({
+                            status: HttpStatusCode.BAD_REQUEST,
+                            msg: 'user_id, bet_name or bet_choice not provided',
+                        })
+                        return
+                    }
+                    if (await checkIfUserExists(user_id)) {
+                        callback({
+                            status: HttpStatusCode.BAD_REQUEST,
+                            msg: 'user_id does not exist',
+                        })
+                        return
+                    }
+
+                    const bet = await dbController.createBet(
+                        bet_name,
+                        user_id,
+                        bet_choice as unknown as string[]
+                    )
+                    console.log(bet)
+                    if (bet) {
+                        customLog(logLevel.debug, service.websocket, `${bet}`)
+                        callback({ status: HttpStatusCode.OK })
+                        return
+                    }
+                } catch (error) {
+                    customLog(logLevel.error, service.websocket, `${error}`)
+                }
             })
         }
     })

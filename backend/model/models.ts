@@ -28,7 +28,7 @@ export type Bet = {
     isClosed: boolean
     userUser_id: string // Foreign key for the openedBy User relation
     openedBy?: User // The related User object
-    choices: Choice[] // List of Choices for this Bet (required, as per latest schema)
+    choices?: Choice[] // List of Choices for this Bet (required, as per latest schema)
     BetStake?: BetStake[] // List of BetStakes for this Bet
 }
 

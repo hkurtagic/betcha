@@ -26,3 +26,10 @@ Content-Type: application/json
 {
     "user_id": "5cc33931-fcd1-42f3-a997-62fd0f542b94"
 }
+
+###
+
+GET http://localhost:8000/randomName
+Content-Type: : application/json
+
+{}

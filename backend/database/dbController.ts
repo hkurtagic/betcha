@@ -1,6 +1,8 @@
 import { Bet, Choice, Group, User } from '../model/models'
 import { customLog, logLevel } from '../winston'
 import { prisma } from '../main'
+import { Prisma } from '@prisma/client'
+import { text } from 'node:stream/consumers'
 
 /**
  * @description creates a Database controller
@@ -61,7 +63,10 @@ class DatabaseController {
     // #endregion Group
     */
     // #region User
-    public async createUser(user_name: string, group_pin: string): Promise<User> {
+    public async createUser(
+        user_name: string,
+        group_pin: string
+    ): Promise<User> {
         return await prisma.user.create({
             data: { name: user_name, groupPin: group_pin },
         })
@@ -79,7 +84,10 @@ class DatabaseController {
         return await prisma.user.delete({ where: { user_id: user_id } })
     }
 
-    public async updateUsernameByID(user_id: string, user_name: string): Promise<User> {
+    public async updateUsernameByID(
+        user_id: string,
+        user_name: string
+    ): Promise<User> {
         return await prisma.user.update({
             where: { user_id: user_id },
             data: { name: user_name },
@@ -102,25 +110,30 @@ class DatabaseController {
         bet_name: string,
         user_id: string,
         bet_choices: string[]
-    ): Promise<Bet> {
-        return await prisma.bet.create({
+    ): Promise<Bet | null> {
+        const bet = await prisma.bet.create({
             data: {
                 name: bet_name,
-                // Choices are now required, so this `createMany` will always run
-                choices: {
-                    createMany: {
-                        data: bet_choices.map((text) => ({ text: text })),
-                    },
-                },
                 isClosed: false,
                 openedBy: {
-                    connect: { user_id: user_id },
+                    connect: {
+                        user_id: user_id,
+                    },
                 },
             },
-            include: {
-                openedBy: true, // Ensure the full 'openedBy' User object is included
-                choices: true, // Include the created Choices in the result
-            },
+        })
+
+        const choices = await prisma.choice.createMany({
+            data: [
+                ...bet_choices.map((text) => ({
+                    text: text,
+                    bet_id: bet.bet_id,
+                })),
+            ],
+        })
+
+        return await prisma.bet.findUnique({
+            where: { bet_id: bet.bet_id },
         })
     }
     /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {
