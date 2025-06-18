@@ -42,11 +42,7 @@ async function resetTables() {
         await prisma.bet.deleteMany({})
         await prisma.user.deleteMany({})
         await prisma.group.deleteMany({})
-        customLog(
-            logLevel.warn,
-            service.database,
-            'All tables wiped (see .env)'
-        )
+        customLog(logLevel.warn, service.database, 'All tables wiped (see .env)')
     } catch (error) {
         customLog(
             logLevel.error,
@@ -68,17 +64,12 @@ async function checkIfUserExists(
     user_id?: string,
     user_name?: string
 ): Promise<boolean | Error> {
-    if (!user_id && !user_name)
-        return new Error('No username or userid provided')
+    if (!user_id && !user_name) return new Error('No username or userid provided')
     try {
         if (user_id) {
-            return (await dbController.getUserByID(user_id)) === null
-                ? true
-                : false
+            return (await dbController.getUserByID(user_id)) !== null ? true : false
         } else if (user_name) {
-            return (await dbController.getUserByName(user_name)) === null
-                ? true
-                : false
+            return (await dbController.getUserByName(user_name)) !== null ? true : false
         } else {
             return new Error(
                 'Unexpected condition: Neither user_id nor user_name was processed'
@@ -86,20 +77,14 @@ async function checkIfUserExists(
         }
     } catch (error) {
         if (error instanceof Error) return error
-        return new Error(
-            'An unknown error occurred while checking user existence'
-        )
+        return new Error('An unknown error occurred while checking user existence')
     }
 }
 
 const httpServer = createServer(app)
 
 httpServer.listen(PORT, () => {
-    customLog(
-        logLevel.info,
-        'httpServer',
-        `Listen on http://${process.env.IP}:${PORT}`
-    )
+    customLog(logLevel.info, 'httpServer', `Listen on http://${process.env.IP}:${PORT}`)
 })
 
 async function main() {
@@ -142,6 +127,9 @@ async function main() {
                 `Outgoing Socket data: ${event} \n ${args}`
             )
         })
+        socket.onAny((event, ...args) => {
+            console.log('Received event:', event)
+        })
         if (socket.recovered) {
             // recovery was successful: socket.id, socket.rooms and socket.data were restored
             customLog(
@@ -171,9 +159,7 @@ async function main() {
                         `Socket data: ${user_id} ${group_pin} from ${data}`
                     )
                     const checkUserId = await dbController.getUserByID(user_id)
-                    const checkGroupPin = await dbController.getGroupByPIN(
-                        group_pin
-                    )
+                    const checkGroupPin = await dbController.getGroupByPIN(group_pin)
                     const errors = new Map()
 
                     if (checkGroupPin == null)
@@ -197,8 +183,7 @@ async function main() {
                             (value, key) => (msg.name = `${msg.name}, ${key}`)
                         )
                         errors.forEach(
-                            (value, key) =>
-                                (msg.message = `${msg.message}, ${value}`)
+                            (value, key) => (msg.message = `${msg.message}, ${value}`)
                         )
                         msg.name.substring(2)
                         msg.message.substring(2)
@@ -243,6 +228,16 @@ async function main() {
                     if (bet) {
                         customLog(logLevel.debug, service.websocket, `${bet}`)
                         callback({ status: HttpStatusCode.OK })
+                        let group_pin = (await dbController.getUserByID(user_id))
+                            ?.groupPin!
+                        let bets = await dbController.getBetsInGroup(group_pin)
+                        bets.map((b) => delete b.openedBy)
+                        customLog(
+                            logLevel.debug,
+                            service.websocket,
+                            `${JSON.stringify(bets)}`
+                        )
+                        io.to(group_pin).emit('BetUpdate', JSON.stringify(bets))
                         return
                     }
                 } catch (error) {

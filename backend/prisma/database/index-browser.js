@@ -137,7 +137,7 @@ exports.Prisma.BetScalarFieldEnum = {
   bet_id: 'bet_id',
   name: 'name',
   isClosed: 'isClosed',
-  userUser_id: 'userUser_id'
+  user_id: 'user_id'
 };
 
 exports.Prisma.ChoiceScalarFieldEnum = {

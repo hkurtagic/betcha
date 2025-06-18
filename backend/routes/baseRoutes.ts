@@ -56,14 +56,16 @@ router.post('/newUser', async (req, res) => {
     const user_name: string = req.body.user_name
         ? req.body.user_name
         : res.status(400).json({ message: 'No user_name provided' })
-    let group_pin: string
-    const g = req.body.group_pin
-        ? await dbController.getGroupByPIN(req.body.group_pin)
-        : null
-    if (g) {
-        group_pin = req.body.group_pin
+    let group_pin: string | null = null
+
+    if (req.body.group_pin) {
+        let group_exists = await dbController.getGroupByPIN(req.body.group_pin)
+        group_pin = group_exists ? group_exists.pin : null
     } else {
         group_pin = (await dbController.createGroup()).pin
+    }
+    if (!group_pin) {
+        res.status(406).json({ message: 'Group does not exist' })
     }
 
     await dbController
@@ -73,7 +75,7 @@ router.post('/newUser', async (req, res) => {
                 res.status(400).json({ message: 'User already in use' })
             } else {
                 return await dbController
-                    .createUser(user_name, group_pin)
+                    .createUser(user_name, group_pin!)
                     .then((u: User) => {
                         res.json(u)
                     })

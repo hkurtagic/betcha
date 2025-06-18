@@ -1,5 +1,6 @@
 import { UUID } from 'crypto'
 import HttpStatusCode from './HTTPStatusCodes'
+import { Bet } from './model/models'
 
 /**
  * @description Client emit | Server listen events
@@ -17,7 +18,9 @@ interface ClientToServerEvents {
 /**
  * @description Server emit | Client listen events
  */
-interface ServerToClientEvents {}
+interface ServerToClientEvents {
+    BetUpdate: (data: string) => void
+}
 /**
  * @description Server to Server events
  */

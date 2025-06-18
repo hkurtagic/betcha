@@ -26,7 +26,7 @@ export type Bet = {
     bet_id: string // Note: You had Int in one schema, String in the other. Using String from your latest.
     name: string
     isClosed: boolean
-    userUser_id: string // Foreign key for the openedBy User relation
+    user_id: string // Foreign key for the openedBy User relation
     openedBy?: User // The related User object
     choices?: Choice[] // List of Choices for this Bet (required, as per latest schema)
     BetStake?: BetStake[] // List of BetStakes for this Bet

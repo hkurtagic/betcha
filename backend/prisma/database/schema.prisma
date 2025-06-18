@@ -34,13 +34,13 @@ model UserToken {
 }
 
 model Bet {
-  bet_id      String     @id @default(uuid())
-  name        String
-  isClosed    Boolean
-  openedBy    User       @relation(fields: [userUser_id], references: [user_id])
-  choices     Choice[]
-  userUser_id String
-  BetStake    BetStake[]
+  bet_id   String     @id @default(uuid())
+  name     String
+  isClosed Boolean
+  openedBy User       @relation(fields: [user_id], references: [user_id])
+  choices  Choice[]
+  user_id  String
+  BetStake BetStake[]
 }
 
 model Choice {
