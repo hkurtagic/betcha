@@ -28,7 +28,7 @@ object AppModule {
     @Singleton
     fun provideSocket(options: SocketOptions): Socket {
         return Socket(
-            endpoint = "http://10.0.2.2:8000/",
+            endpoint = "http://"+BuildConfig.API_EP+":"+BuildConfig.API_PORT,
             config = options
         )
 
