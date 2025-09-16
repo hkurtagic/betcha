@@ -1,5 +1,7 @@
 package com.example.betcha.api
 
+import com.example.betcha.BuildConfig
+
 sealed class ApiResult<out T> {
     data object Loading : ApiResult<Nothing>()
     data class Success<out T>(val value: T) : ApiResult<T>()
@@ -8,9 +10,14 @@ sealed class ApiResult<out T> {
 }
 
 object RetrofitClient {
+    val url: StringBuilder = StringBuilder()
+        .append("http://")
+        .append(BuildConfig.API_EP)
+        .append(":")
+        .append(BuildConfig.API_PORT)
     val apiService: BetchaAPI by lazy {
         retrofit2.Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8000/")
+            .baseUrl(url.toString())
             .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
             .build()
             .create(BetchaAPI::class.java)

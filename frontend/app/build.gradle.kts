@@ -29,6 +29,15 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            buildConfigField("String", "API_EP", "\"10.0.2.2\"")
+            buildConfigField("String", "API_PORT", "\"8000\"")
+        }
+        create("deploy") {
+            initWith(getByName("debug"))
+            buildConfigField("String", "API_EP", "\"10.101.21.46\"")
+            buildConfigField("String", "API_PORT", "\"8000\"")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -39,6 +48,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
