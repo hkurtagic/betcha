@@ -61,5 +61,5 @@ model BetStake {
   Bet       Bet    @relation(fields: [bet_id], references: [bet_id])
   Choice    Choice @relation(fields: [choice_id], references: [choice_id])
 
-  @@id([user_id, bet_id, choice_id])
+  @@id([user_id, bet_id])
 }

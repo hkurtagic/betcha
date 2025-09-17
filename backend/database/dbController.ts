@@ -187,8 +187,16 @@ class DatabaseController {
         choice_id: string,
         amount: number
     ): Promise<BetStake | null> {
-        return await prisma.betStake.create({
-            data: {
+        return await prisma.betStake.upsert({
+            where: {
+                user_id_bet_id: {
+                    user_id: user_id,
+                    bet_id: bet_id
+                }
+            }, update: {
+                amount: amount,
+            },
+            create: {
                 amount: amount,
                 User: {
                     connect: {
@@ -216,12 +224,12 @@ class DatabaseController {
         })
     }
 
-    public async getBetStakeByNameAndBet(
+    public async getBetStakeByUserIdAndChoiceId(
         user_id: string,
-        bet_id: string
-    ): Promise<BetStake[] | null> {
-        return await prisma.betStake.findMany({
-            where: { user_id: user_id, bet_id: bet_id },
+        choice_id: string
+    ): Promise<BetStake | null> {
+        return await prisma.betStake.findFirst({
+            where: { user_id: user_id, choice_id: choice_id}
         })
     }
 
@@ -238,6 +246,18 @@ class DatabaseController {
                 BetStake: true,
             },
         })
+    }
+
+    public async getIfUserInBet(bet_id: string, user_id: string): Promise<boolean> {
+        const res = await prisma.betStake.findFirst({
+            where: {
+                user_id: user_id,
+                bet_id: bet_id
+            }
+        })
+        console.log("-------------\n"+res)
+        if (res) {return true}
+        else return false
     }
 
     /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {

@@ -8318,7 +8318,7 @@ export namespace Prisma {
   }
 
   export type BetStakeWhereUniqueInput = Prisma.AtLeast<{
-    user_id_bet_id_choice_id?: BetStakeUser_idBet_idChoice_idCompoundUniqueInput
+    user_id_bet_id?: BetStakeUser_idBet_idCompoundUniqueInput
     AND?: BetStakeWhereInput | BetStakeWhereInput[]
     OR?: BetStakeWhereInput[]
     NOT?: BetStakeWhereInput | BetStakeWhereInput[]
@@ -8329,7 +8329,7 @@ export namespace Prisma {
     User?: XOR<UserScalarRelationFilter, UserWhereInput>
     Bet?: XOR<BetScalarRelationFilter, BetWhereInput>
     Choice?: XOR<ChoiceScalarRelationFilter, ChoiceWhereInput>
-  }, "user_id_bet_id_choice_id">
+  }, "user_id_bet_id">
 
   export type BetStakeOrderByWithAggregationInput = {
     user_id?: SortOrder
@@ -8853,10 +8853,9 @@ export namespace Prisma {
     isNot?: ChoiceWhereInput
   }
 
-  export type BetStakeUser_idBet_idChoice_idCompoundUniqueInput = {
+  export type BetStakeUser_idBet_idCompoundUniqueInput = {
     user_id: string
     bet_id: string
-    choice_id: string
   }
 
   export type BetStakeCountOrderByAggregateInput = {

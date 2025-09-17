@@ -15,6 +15,7 @@ import { createServer } from 'http'
 import { app, PORT } from './app'
 import { databaseController as dbController } from './database/dbController'
 import HttpStatusCode from './HTTPStatusCodes'
+import { BetStake } from './model/models'
 
 export const prisma = new PrismaClient()
 /**
@@ -113,25 +114,26 @@ async function checkIfChoiceExists(choice_id: string): Promise<boolean | Error> 
     }
 }
 
-async function checkIfBetAlreadyPlaced(
-    user_id: string,
-    bet_id: string
-): Promise<boolean | Error> {
-    if (!user_id && !bet_id) return new Error('No bet_id or userid provided')
-    try {
-        if (user_id) {
-            let s = await dbController.getBetStakeByNameAndBet(user_id, bet_id)
-            return s !== null && s?.length > 0 ? true : false
-        } else {
-            return new Error(
-                'Unexpected condition: Neither user_id nor user_name was processed'
-            )
-        }
-    } catch (error) {
-        if (error instanceof Error) return error
-        return new Error('An unknown error occurred while checking user existence')
-    }
-}
+// async function checkIfBetStakeAlreadyPlaced(
+//     user_id: string,
+//     bet_id: string,
+//     choice_id: string
+// ): Promise<boolean | Error> {
+//     if (!user_id && !bet_id) return new Error('No bet_id or userid provided')
+//     try {
+//         if (user_id) {
+//             let s = await dbController.getBetStakeByUserIdAndChoiceId(user_id, choice_id)
+//             return s !== null && s ? true : false
+//         } else {
+//             return new Error(
+//                 'Unexpected condition: Neither user_id nor user_name was processed'
+//             )
+//         }
+//     } catch (error) {
+//         if (error instanceof Error) return error
+//         return new Error('An unknown error occurred while checking user existence')
+//     }
+// }
 
 async function checkIfBetIsOpen(bet_id: string): Promise<boolean | Error> {
     if (!bet_id) return new Error('No bet_id provided')
@@ -179,6 +181,19 @@ async function checkIfChoiceIsWinning(choice_id: string): Promise<boolean | null
     return state ? true : false
 }
 
+async function checkIfBetStakeIsValid(user_id: string, choice_id: string): Promise<boolean | Error> {
+    try {
+        let choice = await dbController.getChoiceById(choice_id)
+        choice?.BetStake?.find(b => b.user_id == user_id)
+        if (choice) { return true}
+        customLog(logLevel.debug, service.websocket, `checkIfBetStakeIsValid | ${choice}`)
+        return false
+    } catch (error) {
+        if (error instanceof Error) return error
+        return new Error('An unknown error occurred while checking choice existence')
+    }
+}
+
 const httpServer = createServer(app)
 
 httpServer.listen(PORT, () => {
@@ -218,16 +233,16 @@ async function main() {
     })
 
     io.on('connection', (socket) => {
-        socket.onAnyOutgoing((event, ...args) => {
-            customLog(
-                logLevel.debug,
-                service.websocket,
-                `Outgoing Socket data: ${event} \n ${args}`
-            )
-        })
-        socket.onAny((event, ...args) => {
-            console.log('Received event:', event)
-        })
+        // socket.onAnyOutgoing((event, ...args) => {
+        //     customLog(
+        //         logLevel.debug,
+        //         service.websocket,
+        //         `Outgoing Socket data: ${event} \n ${args}`
+        //     )
+        // })
+        // socket.onAny((event, ...args) => {
+        //     console.log('Received event:', event)
+        // })
         if (socket.recovered) {
             // recovery was successful: socket.id, socket.rooms and socket.data were restored
             customLog(
@@ -348,6 +363,8 @@ async function main() {
                 const [user_id, bet_id, choice_id, amount] = Object.values(
                     JSON.parse(data)
                 ) as string[]
+                let update: boolean = false
+                let betStake: BetStake | null = null
 
                 if (!user_id || !choice_id || !bet_id || !amount) {
                     callback({
@@ -370,9 +387,9 @@ async function main() {
                         `await checkIfBetIsOpen(bet_id) = ${await checkIfBetIsOpen(
                             bet_id
                         )} \n` +
-                        `await checkIfBetAlreadyPlaced(user_id, bet_id) ${await checkIfBetAlreadyPlaced(
+                        `await checkIfBetStakeIsValid(user_id, choice_id) ${await checkIfBetStakeIsValid(
                             user_id,
-                            bet_id
+                            choice_id
                         )}`
                 )
 
@@ -404,21 +421,27 @@ async function main() {
                     })
                     return
                 }
+
+                let userInBet = await dbController.getIfUserInBet(bet_id, user_id)
+                betStake = await dbController.getBetStakeByUserIdAndChoiceId(user_id, choice_id)
+                console.log("----------------\n" + userInBet + "\n" + betStake)
                 // TODO: handle BetStake update if it already exists (only same choice)
-                if (await checkIfBetAlreadyPlaced(user_id, bet_id)) {
-                    callback({
+                if (!betStake && userInBet) {
+                        callback({
                         status: HttpStatusCode.BAD_REQUEST,
-                        msg: 'a betStake was already placed',
-                    })
-                    return
+                        msg: 'a betStake was already placed on another choice',
+                        })
+                        return
+                } else if (betStake && !userInBet) {
+                        callback({
+                        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+                        msg: 'How the f*** did that happen?',
+                        })
+                        return
                 }
 
-                const betStake = await dbController.createBetStake(
-                    user_id,
-                    bet_id,
-                    choice_id,
-                    Number(amount)
-                )
+                betStake = await dbController.createBetStake(user_id, bet_id, choice_id, Number(amount))
+                
 
                 console.log(betStake)
                 if (betStake) {
