@@ -7,13 +7,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
@@ -21,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,16 +51,23 @@ import androidx.navigation.compose.rememberNavController
 import com.example.betcha.R
 import com.example.betcha.model.HomeViewModel
 import com.example.betcha.model.SessionManager
+import com.example.betcha.presentation.components.AppSnackbarHost
+import com.example.betcha.presentation.components.AppSnackbarVisuals
+import com.example.betcha.presentation.components.rememberAppSnackbarState
 import com.example.betcha.ui.theme.BetchaTheme
 import kotlinx.coroutines.android.awaitFrame
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
     modifier: Modifier,
     homeViewModel: HomeViewModel = hiltViewModel()
 ) {
+    val scroll = rememberScrollState()
 
+    val (snackbarHostState, snackbarManager) = rememberAppSnackbarState()
     val state by homeViewModel.state.collectAsState()
     val userState by homeViewModel.userState.collectAsState()
     val focusRequester = remember { FocusRequester() }
@@ -60,7 +75,7 @@ fun HomeScreen(
         awaitFrame()
         focusRequester.requestFocus()
     }
-    
+
     LaunchedEffect(userState.userId) {
         Log.i("HomeUser", userState.userId)
         if (userState.userId != "") {
@@ -68,95 +83,126 @@ fun HomeScreen(
             homeViewModel.navigateToGroup(navController)
         }
     }
-
-
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-
-        ) {
-
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "App Logo",
-            modifier = modifier.size(120.dp)
-        )
-        Text(
-            text = "Betcha",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(36.dp))
-
-        OutlinedTextField(
-            state = state.username,
-            label = { Text(text = stringResource(R.string.username_label)) },
-            modifier = modifier
-                .padding(0.dp, 15.dp)
-                .focusRequester(focusRequester),
-            trailingIcon = {
-                IconButton(
-                    modifier = modifier,
-                    onClick = { homeViewModel.getRandomUsername() }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.shuffle_24dp_black),
-                        contentDescription = "Random Username"
+    LaunchedEffect(Unit) {
+        homeViewModel.events.collectLatest { e ->
+            when (e) {
+                is HomeViewModel.UiEvent.ShowSnack -> {
+                    val result = snackbarHostState.showSnackbar(
+                        AppSnackbarVisuals(
+                            message = e.message,
+                            duration = e.duration,
+                            type = e.type
+                        )
                     )
                 }
-            },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            isError = homeViewModel.usernameError.value != "",
-            supportingText = {
-                if (homeViewModel.usernameError.value != "") {
-                    Text(homeViewModel.usernameError.value)
-                }
             }
-        )
-        OutlinedTextField(
-            state = state.groupPIN,
-            label = { Text(text = stringResource(R.string.group_pin_label)) },
-            modifier = modifier
-                .padding(15.dp)
-                .focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            onKeyboardAction = { performDefaultAction: () -> Unit ->
-                homeViewModel.validateInput(navController)
-                performDefaultAction()
-            },
-            isError = homeViewModel.groupPINError.value != "",
-            supportingText = {
-                if (homeViewModel.groupPINError.value != "") {
-                    Text(homeViewModel.groupPINError.value)
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = {
-                homeViewModel.validateInput(navController)
-            },
-            modifier = Modifier.fillMaxWidth(0.6f),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(
-                text = if (state.groupPIN.text != "") "Join Group" else "Create Group",
-                style = MaterialTheme.typography.labelLarge
-            )
-            Icon(
-                imageVector = Icons.Filled.PlayArrow, // painterResource(R.drawable.play_arrow_24dp_black),
-                contentDescription = if (state.groupPIN.text != "") "Join Group" else "Create Group"
-            )
         }
+    }
 
-        Spacer(modifier = Modifier.height(24.dp))
+
+    Scaffold(
+        snackbarHost = {
+            AppSnackbarHost(
+                snackbarHostState,
+                modifier = Modifier
+                    .imePadding()
+                    .navigationBarsPadding()
+            )
+        },
+        modifier = Modifier,
+
+        )
+    { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(innerPadding)
+                .imePadding()
+                .verticalScroll(scroll, enabled = WindowInsets.isImeVisible),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+
+            ) {
+
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "App Logo",
+                modifier = modifier.size(120.dp)
+            )
+            Text(
+                text = "Betcha",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(36.dp))
+
+            OutlinedTextField(
+                state = state.username,
+                label = { Text(text = stringResource(R.string.username_label)) },
+                modifier = modifier
+                    .padding(0.dp, 15.dp)
+                    .focusRequester(focusRequester),
+                trailingIcon = {
+                    IconButton(
+                        modifier = modifier,
+                        onClick = { homeViewModel.getRandomUsername() }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.shuffle_24dp_black),
+                            contentDescription = "Random Username"
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                isError = homeViewModel.usernameError.value != "",
+                supportingText = {
+                    if (homeViewModel.usernameError.value != "") {
+                        Text(homeViewModel.usernameError.value)
+                    }
+                }
+            )
+            OutlinedTextField(
+                state = state.groupPIN,
+                label = { Text(text = stringResource(R.string.group_pin_label)) },
+                modifier = modifier
+                    .padding(15.dp)
+                    .focusRequester(focusRequester),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                onKeyboardAction = { performDefaultAction: () -> Unit ->
+                    homeViewModel.validateInput(navController)
+                    performDefaultAction()
+                },
+                isError = homeViewModel.groupPINError.value != "",
+                supportingText = {
+                    if (homeViewModel.groupPINError.value != "") {
+                        Text(homeViewModel.groupPINError.value)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    homeViewModel.validateInput(navController)
+                },
+                modifier = Modifier.fillMaxWidth(0.6f),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = if (state.groupPIN.text != "") "Join Group" else "Create Group",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow, // painterResource(R.drawable.play_arrow_24dp_black),
+                    contentDescription = if (state.groupPIN.text != "") "Join Group" else "Create Group"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 }
 

@@ -6,19 +6,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
@@ -27,7 +25,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,9 +32,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.betcha.R
 import com.example.betcha.model.GroupViewModel
+import com.example.betcha.presentation.components.AppSnackbarHost
+import com.example.betcha.presentation.components.AppSnackbarVisuals
+import com.example.betcha.presentation.components.rememberAppSnackbarState
 import com.example.betcha.ui.theme.BetchaTheme
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -46,11 +46,37 @@ fun GroupScreen(
     navController: NavController,
     groupViewModel: GroupViewModel = hiltViewModel(),
 ) {
+    val (snackbarHostState, snackbarManager) = rememberAppSnackbarState()
     val userState by groupViewModel.userState.collectAsState()
     val betState by groupViewModel.bets.collectAsState()
     LaunchedEffect(userState.groupPin) {
         if (userState.groupPin != "" && !groupViewModel.socket.isConnected()) {
             groupViewModel.joinGroupSocket(userState.userId, userState.groupPin)
+        }
+    }
+    LaunchedEffect(Unit) {
+        groupViewModel.events.collectLatest { e ->
+            when (e) {
+                is GroupViewModel.UiEvent.ShowSnack -> {
+                    val result = snackbarHostState.showSnackbar(
+                        AppSnackbarVisuals(
+                            message = e.message,
+                            actionLabel = e.actionLabel,
+                            duration = e.duration,
+                            type = e.type
+                        )
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        when (e.action) {
+                            is GroupViewModel.SnackAction.RetryCreateBet -> groupViewModel.retryCreateBet(
+                                e.action.data
+                            )
+
+                            null -> Unit
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -72,6 +98,8 @@ fun GroupScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                 },
+                //TODO: add functional back button by handling rejoin manually?
+                /*
                 navigationIcon = {
                     IconButton(onClick = { /* doSomething() */ }) {
                         Icon(
@@ -82,6 +110,8 @@ fun GroupScreen(
                     }
 
                 },
+                //TODO: add close/remove bet via burger menu?
+                //TODO: add leave group menu option?
                 actions = {
                     IconButton(onClick = { /* doSomething() */ }) {
                         Icon(
@@ -90,13 +120,21 @@ fun GroupScreen(
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
-                },
+                },*/
             )
         },
         floatingActionButton = {
             CreateBetFab(onBetCreated = { betData ->
                 groupViewModel.createBet(betData)
             })
+        },
+        snackbarHost = {
+            AppSnackbarHost(
+                snackbarHostState,
+                modifier = Modifier
+                    .imePadding()
+                    .navigationBarsPadding()
+            )
         },
         content = { innerPadding ->
             Column(
