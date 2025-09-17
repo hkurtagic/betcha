@@ -24,10 +24,11 @@ import kotlinx.coroutines.android.awaitFrame
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 
-fun parseDouble(s:String, locale: Locale = Locale.getDefault()): Double? {
-    val decEsc = { Regex.escape(DecimalFormatSymbols.getInstance(locale).decimalSeparator.toString()) }
+fun parseDouble(s: String, locale: Locale = Locale.getDefault()): Double? {
+    val decEsc =
+        { Regex.escape(DecimalFormatSymbols.getInstance(locale).decimalSeparator.toString()) }
     val valid = Regex("^\\d*(?:$decEsc\\d*)?$")
-    return if (valid.matches(s)){
+    return if (valid.matches(s)) {
         s.toDouble()
     } else {
         null
@@ -46,11 +47,13 @@ fun validateNumberText(
     messages: NumberErrorMessages = NumberErrorMessages()
 ): String? {
     if (required && text.isEmpty()) return messages.required
+    if (text.isEmpty()) return null
     val raw = text.trim()
     val parsed = parseDouble(raw)
 
     if (parsed == null) {
-        if (raw.isEmpty() || raw == "-" || raw == "." || raw == ",") return messages.invalid
+        if (raw == "-") return messages.negativeNotAllowed
+        if (raw.isEmpty() || raw == "." || raw == ",") return messages.invalid
         return messages.invalid
     }
 
@@ -69,7 +72,7 @@ fun BetDetails(
 ) {
     //var text by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
-    var amountValue:Double? by remember { mutableStateOf(null) }
+    var amountValue: Double? by remember { mutableStateOf(null) }
     var amountError by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(focusRequester) {
@@ -77,7 +80,7 @@ fun BetDetails(
         focusRequester.requestFocus()
     }
     val messages = NumberErrorMessages()
-    val error = remember(amountText, amountValue,messages) {
+    val error = remember(amountText, amountValue, messages) {
         validateNumberText(
             text = amountText,
             required = false,
@@ -93,11 +96,12 @@ fun BetDetails(
                 Text(choice.text)
                 OutlinedTextField(
                     value = amountText,
-                    onValueChange = {raw ->
+                    onValueChange = { raw ->
                         amountText = raw
-                        if (raw.isNotEmpty()){
+                        if (raw.isNotEmpty() && validateNumberText(raw, required = false) == null) {
                             amountValue = parseDouble(raw)
-                        } },
+                        }
+                    },
                     label = { Text("Bet Amount") },
                     modifier = Modifier.fillMaxWidth(),
                     isError = error != null,
@@ -114,7 +118,8 @@ fun BetDetails(
         confirmButton = {
             TextButton(onClick = {
                 val err = validateNumberText(
-                    amountText, required = true)
+                    amountText, required = true
+                )
                 if (err == null) {
                     onConfirmBet(
                         BetStake(
