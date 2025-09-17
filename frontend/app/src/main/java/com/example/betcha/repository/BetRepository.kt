@@ -10,6 +10,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
+import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,7 +18,7 @@ interface BetRepository {
     val bets: StateFlow<List<Bet>>
 
     //fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit)
-    fun sendNewBet(bet: BetCreationData)
+    fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit))
     fun sendStake(stake: BetStake)
 }
 
@@ -167,7 +168,7 @@ class BetRepositoryImpl @Inject constructor(
                 it.mapToBetObject(sessionManager.sessionState.value.userId).copy()
             }
             _bets.value = copied
-            Log.d("Recomposition", "Updated with ${copied.size} bets")
+            Log.d("Repo | Recomposition", "Updated with ${copied.size} bets")
 //            _bets.update { current ->
 //                current + copied
 //            }
@@ -187,15 +188,16 @@ class BetRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun sendNewBet(bet: BetCreationData) {
+    override fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit)) {
         val json = Json.encodeToString(bet)
         Log.i("send bet", json)
         socket.emit(
             "requestCreateBet",
             json,
-            callback = { response ->
+            callback = callback /*{ response ->
                 Log.i("bet creation", response.toString())
-            }
+
+            }*/
         )
     }
 
