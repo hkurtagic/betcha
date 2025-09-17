@@ -93,6 +93,11 @@ fun GroupScreen(
                 },
             )
         },
+        floatingActionButton = {
+            CreateBetFab(onBetCreated = { betData ->
+                groupViewModel.createBet(betData)
+            })
+        },
         content = { innerPadding ->
             Column(
                 modifier = Modifier.padding(innerPadding)
@@ -114,12 +119,6 @@ fun GroupScreen(
                     }
                 }
             }
-
-            CreateBetFab(onBetCreated = { betData ->
-                groupViewModel.createBet(betData)
-            })
-
-
         }
     )
 }

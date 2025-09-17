@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -92,19 +93,20 @@ fun CreateBetDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateBetFab(onBetCreated: (BetCreationData) -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    //Box(modifier = Modifier.fillMaxSize()) {
         FloatingActionButton(
             onClick = {
                 showDialog = true
                 //onBetCreated(BetCreationData(text = "a", selections = listOf("11", "22")))
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            }//,
+//            modifier = Modifier
+//                .align(Alignment.BottomEnd)
+//                .padding(bottom = 16.dp, end = 16.dp)
         ) {
             Icon(Icons.Default.Add, contentDescription = "Create Bet")
         }
@@ -119,4 +121,4 @@ fun CreateBetFab(onBetCreated: (BetCreationData) -> Unit) {
             )
         }
     }
-}
+//}

@@ -66,7 +66,7 @@ class Socket(
         if (callback != null) {
             socketIo.emit(event, data, Ack {
                 val ackData = it[0]
-                Log.i("custom SocketIO String emit", ackData.toString())
+                Log.i("SocketIO | emit String", ackData.toString())
                 callback(ackData as JSONObject)
             })
         } else {
@@ -78,6 +78,7 @@ class Socket(
         if (callback != null) {
             socketIo.emit(event, arrayOf(JSONObject(data.toString())), Ack {
                 val ackData = it[0]
+                Log.i("SocketIO | emit JSONObject", ackData.toString())
                 callback(ackData as JSONObject)
             })
         } else {
@@ -89,6 +90,7 @@ class Socket(
         if (callback != null) {
             socketIo.emit(event, JSONArray(data.toString()), Ack {
                 val ackData = it[0]
+                Log.i("SocketIO | emit JSONArray",  ackData.toString())
                 callback(ackData as JSONObject)
             })
         } else {

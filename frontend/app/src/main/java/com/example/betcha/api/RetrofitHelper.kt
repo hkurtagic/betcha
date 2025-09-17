@@ -10,7 +10,7 @@ sealed class ApiResult<out T> {
 }
 
 object RetrofitClient {
-    val url: StringBuilder = StringBuilder()
+    private val url: StringBuilder = StringBuilder()
         .append("http://")
         .append(BuildConfig.API_EP)
         .append(":")

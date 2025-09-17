@@ -67,7 +67,7 @@ class HomeViewModel @Inject constructor(
                     Log.i("api error: ", "HTTP ${response.code()}: $errorMsg")
                 }
             } catch (e: Exception) {
-                Log.i("api error: ", "Network error: ${e.localizedMessage}")
+                Log.i("HomeViewModel | api error", "Network error: ${e.localizedMessage}")
             }
         }
     }
