@@ -35,7 +35,7 @@ android {
         }
         create("deploy") {
             initWith(getByName("debug"))
-            buildConfigField("String", "API_EP", "\"10.101.21.46\"")
+            buildConfigField("String", "API_EP", "\"10.101.21.37\"")
             buildConfigField("String", "API_PORT", "\"8000\"")
         }
     }
