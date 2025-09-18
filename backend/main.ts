@@ -181,12 +181,21 @@ async function checkIfChoiceIsWinning(choice_id: string): Promise<boolean | null
     return state ? true : false
 }
 
-async function checkIfBetStakeIsValid(user_id: string, choice_id: string): Promise<boolean | Error> {
+async function checkIfBetStakeIsValid(
+    user_id: string,
+    choice_id: string
+): Promise<boolean | Error> {
     try {
         let choice = await dbController.getChoiceById(choice_id)
-        choice?.BetStake?.find(b => b.user_id == user_id)
-        if (choice) { return true}
-        customLog(logLevel.debug, service.websocket, `checkIfBetStakeIsValid | ${choice}`)
+        choice?.BetStake?.find((b) => b.user_id == user_id)
+        if (choice) {
+            return true
+        }
+        customLog(
+            logLevel.debug,
+            service.websocket,
+            `checkIfBetStakeIsValid | ${choice}`
+        )
         return false
     } catch (error) {
         if (error instanceof Error) return error
@@ -285,6 +294,11 @@ async function main() {
                     if (errors.size === 0) {
                         socket.join(group_pin)
                         callback({ status: HttpStatusCode.OK })
+
+                        // push update to new User
+                        let bets = await dbController.getBetsInGroup(group_pin)
+                        bets.map((b) => delete b.openedBy)
+                        socket.emit('BetUpdate', JSON.stringify(bets))
                         return
                     } else {
                         const msg: Error = {
@@ -423,25 +437,32 @@ async function main() {
                 }
 
                 let userInBet = await dbController.getIfUserInBet(bet_id, user_id)
-                betStake = await dbController.getBetStakeByUserIdAndChoiceId(user_id, choice_id)
-                console.log("----------------\n" + userInBet + "\n" + betStake)
+                betStake = await dbController.getBetStakeByUserIdAndChoiceId(
+                    user_id,
+                    choice_id
+                )
+                console.log('----------------\n' + userInBet + '\n' + betStake)
                 // TODO: handle BetStake update if it already exists (only same choice)
                 if (!betStake && userInBet) {
-                        callback({
+                    callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'a betStake was already placed on another choice',
-                        })
-                        return
+                    })
+                    return
                 } else if (betStake && !userInBet) {
-                        callback({
+                    callback({
                         status: HttpStatusCode.INTERNAL_SERVER_ERROR,
                         msg: 'How the f*** did that happen?',
-                        })
-                        return
+                    })
+                    return
                 }
 
-                betStake = await dbController.createBetStake(user_id, bet_id, choice_id, Number(amount))
-                
+                betStake = await dbController.createBetStake(
+                    user_id,
+                    bet_id,
+                    choice_id,
+                    Number(amount)
+                )
 
                 console.log(betStake)
                 if (betStake) {
