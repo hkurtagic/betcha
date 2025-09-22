@@ -21,6 +21,7 @@ interface BetRepository {
     //fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit)
     fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit))
     fun sendStake(stake: BetStake, callback: ((JSONObject) -> Unit))
+    fun closeBet(betId: String, userId: String, callback: ((JSONObject) -> Unit))
 }
 
 @Serializable
@@ -268,6 +269,19 @@ class BetRepositoryImpl @Inject constructor(
             /*{ response ->
                 Log.i("BetRepo | bet stake creation", response.toString())
             }*/
+        )
+    }
+
+    override fun closeBet(betId: String, userId: String, callback: ((JSONObject) -> Unit)) {
+        val closeBetObject = JSONObject()
+        closeBetObject.put("user_id", userId)
+        closeBetObject.put("bet_id", betId)
+        val json = Json.encodeToString(closeBetObject)
+        Log.i("Repo | closeBet", json)
+        socket.emit(
+            "requestCloseBet",
+            json,
+            callback = callback
         )
     }
 
