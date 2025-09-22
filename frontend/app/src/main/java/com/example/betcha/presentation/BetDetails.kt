@@ -25,8 +25,7 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 fun parseDouble(s: String, locale: Locale = Locale.getDefault()): Double? {
-    val decEsc =
-        { Regex.escape(DecimalFormatSymbols.getInstance(locale).decimalSeparator.toString()) }
+    val decEsc = Regex.escape(DecimalFormatSymbols.getInstance(locale).decimalSeparator.toString())
     val valid = Regex("^\\d*(?:$decEsc\\d*)?$")
     return if (valid.matches(s)) {
         s.toDouble()
@@ -46,9 +45,9 @@ fun validateNumberText(
     required: Boolean,
     messages: NumberErrorMessages = NumberErrorMessages()
 ): String? {
-    if (required && text.isEmpty()) return messages.required
-    if (text.isEmpty()) return null
     val raw = text.trim()
+    if (required && raw.isEmpty()) return messages.required
+    if (raw.isEmpty()) return ""
     val parsed = parseDouble(raw)
 
     if (parsed == null) {
@@ -98,13 +97,14 @@ fun BetDetails(
                     value = amountText,
                     onValueChange = { raw ->
                         amountText = raw
-                        if (raw.isNotEmpty() && validateNumberText(raw, required = false) == null) {
+                        if (validateNumberText(raw, required = false) == null) {
                             amountValue = parseDouble(raw)
                         }
                     },
+                    singleLine = true,
                     label = { Text("Bet Amount") },
                     modifier = Modifier.fillMaxWidth(),
-                    isError = error != null,
+                    isError = (error != null) && (error != ""),
                     supportingText = {
                         Text(error ?: " ")
                     },
@@ -117,10 +117,7 @@ fun BetDetails(
         },
         confirmButton = {
             TextButton(onClick = {
-                val err = validateNumberText(
-                    amountText, required = true
-                )
-                if (err == null) {
+                if (validateNumberText(amountText, required = true) == null) {
                     onConfirmBet(
                         BetStake(
                             bet_id = bet.bet_id,

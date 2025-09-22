@@ -20,7 +20,6 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 
-
 @HiltViewModel
 class GroupViewModel @Inject constructor(
     //savedStateHandle: SavedStateHandle,
@@ -62,8 +61,8 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    fun onBetCreatedSuccess() {
-        emit(UiEvent.ShowSnack("Bet created", type = SnackbarType.Success))
+    fun onSuccess(text: String) {
+        emit(UiEvent.ShowSnack(text, type = SnackbarType.Success))
     }
 
     fun onBetCreateError(betData: BetCreationData) {
@@ -82,7 +81,13 @@ class GroupViewModel @Inject constructor(
         createBet(betData)
     }
 
+    fun onSetStakeError(stakeData: BetStake) {
 
+    }
+
+    fun retrySetStake(stakeData: BetStake) {
+        updateStake(stakeData)
+    }
 //    init {
 //        //getUserData(userId)
 //        betRepository.subscribeToBetUpdates { updated ->
@@ -129,7 +134,7 @@ class GroupViewModel @Inject constructor(
             betData.user_id = _sessionState.value.userId
             betRepository.sendNewBet(betData) { response ->
                 if (response["status"] == 200) {
-                    onBetCreatedSuccess()
+                    onSuccess("New Bet created")
                 } else {
                     onBetCreateError(betData)
                 }
@@ -149,7 +154,13 @@ class GroupViewModel @Inject constructor(
     fun updateStake(betStake: BetStake) {
         viewModelScope.launch {
             betStake.user_id = _sessionState.value.userId
-            betRepository.sendStake(betStake)
+            betRepository.sendStake(betStake) { response ->
+                if (response["status"] == 200) {
+                    onSuccess("Stake set on Bet")
+                } else {
+                    onSetStakeError(betStake)
+                }
+            }
         }
     }
 

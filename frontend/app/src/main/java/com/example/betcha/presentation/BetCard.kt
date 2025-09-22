@@ -40,7 +40,8 @@ fun SelectionButton(
     choice_id: String,
     text: String,
     percentage: Float,
-    onChoiceClick: (String) -> Unit
+    onChoiceClick: (String) -> Unit,
+    isMyBet: Boolean
 ) {
     val clampedPercentage = percentage.coerceIn(0f, 100f) / 100f
     val shape = RoundedCornerShape(8.dp)
@@ -57,7 +58,10 @@ fun SelectionButton(
             contentColor = MaterialTheme.colorScheme.onPrimaryFixed
         ),
         elevation = ButtonDefaults.buttonElevation(0.dp),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+        border = if (isMyBet) BorderStroke(
+            2.dp,
+            MaterialTheme.colorScheme.primary
+        ) else BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
 
         ) {
         Box(
@@ -78,8 +82,11 @@ fun SelectionButton(
                     .fillMaxWidth(clampedPercentage)
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryFixedDim,
+                            colors = if (isMyBet) listOf(
+                                MaterialTheme.colorScheme.primaryFixed,
+                                MaterialTheme.colorScheme.primary
+                            ) else listOf(
+                                MaterialTheme.colorScheme.primaryFixed,
                                 MaterialTheme.colorScheme.primaryFixedDim
                             )
                         )
@@ -151,7 +158,9 @@ fun BetCard(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
                         onChoiceClick = {
                             showDialog = true
                             selectedChoice = it
-                        }
+                        },
+                        isMyBet = (bet.choices.find { s -> s.choice_id == bet.MyBet?.choice_id }?.choice_id
+                            ?: -1) == selection.choice_id
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -166,14 +175,14 @@ fun BetCard(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
 
                 Text("Winners:")
                 bet.concludedInfo?.winners?.forEach {
-                    Text("- ${it.userName}: ${it.amount} Coins")
+                    Text("- ${it.name}: ${it.amount} Coins")
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 if (bet.concludedInfo != null) {
                     if (bet.concludedInfo.didWin) {
-                        Text("You won ${bet.concludedInfo.winnings}!", color = Color.Green)
+                        Text("You won ${bet.concludedInfo.myWin}!", color = Color.Green)
                     } else {
                         Text("You lost your bet", color = Color.Red)
                     }
@@ -193,12 +202,13 @@ fun PreviewBetCard() {
         isClosed = false,
         potSize = 1200.00,
         choices = listOf(
-            Choice("1", "Team A", false, 99.0f),
-            Choice("2", "Team B", false, 35.0f)
+            Choice("1", "Team A", false, 95.0f),
+            Choice("2", "Team B", false, 1.0f),
+            Choice("3", "Team C", false, 50.0f)
         ),
         MyBet = stake,
         bet_id = "1",
-        BetStakes = listOf(stake),
+        betStakes = listOf(stake),
         concludedInfo = null
     )
 
