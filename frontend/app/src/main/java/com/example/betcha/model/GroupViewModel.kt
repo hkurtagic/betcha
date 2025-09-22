@@ -10,6 +10,7 @@ import com.example.betcha.presentation.components.SnackbarType
 import com.example.betcha.repository.BetCreationData
 import com.example.betcha.repository.BetRepository
 import com.example.betcha.repository.BetStake
+import com.example.betcha.repository.CloseBet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -159,6 +160,21 @@ class GroupViewModel @Inject constructor(
                     onSuccess("Stake set on Bet")
                 } else {
                     onSetStakeError(betStake)
+                }
+            }
+        }
+    }
+
+    fun closeBet(bet_id: String) {
+        viewModelScope.launch {
+            val user_id = _sessionState.value.userId
+            betRepository.closeBet(
+                closeBet = CloseBet(user_id, bet_id)
+            ) { response ->
+                if (response["status"] == 200) {
+                    onSuccess("Stake set on Bet")
+                } else {
+                    Log.i("GroupViewModel", "Could not close bet: " + bet_id)
                 }
             }
         }

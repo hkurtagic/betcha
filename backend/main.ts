@@ -333,8 +333,13 @@ async function main() {
                         callback({ status: HttpStatusCode.OK })
 
                         // push updated member list to all users in group
-                        let users = await dbController.getUsersInGroup(group_pin)
-                        io.to(group_pin).emit('UserUpdate', JSON.stringify(users))
+                        let users = await dbController.getUsersInGroup(
+                            group_pin
+                        )
+                        io.to(group_pin).emit(
+                            'UserUpdate',
+                            JSON.stringify(users)
+                        )
 
                         // push list of existing bets to new User
                         let bets = await dbController.getBetsInGroup(group_pin)
@@ -557,7 +562,7 @@ async function main() {
                     return
                 }
 
-                if (await checkIfBetIsOpen(bet_id)) {
+                if (!(await checkIfBetIsOpen(bet_id))) {
                     callback({
                         status: HttpStatusCode.BAD_REQUEST,
                         msg: 'bet already closed',

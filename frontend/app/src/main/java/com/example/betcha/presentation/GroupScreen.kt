@@ -148,10 +148,10 @@ fun GroupScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(betState) { bet ->
-                        BetCard(
-                            bet, onChoiceClick = { betStake ->
+                        BetCardv2(
+                            userState.userId, bet, onChoiceClick = { betStake ->
                                 groupViewModel.updateStake(betStake)
-                            }
+                            }, onBetClose = { groupViewModel.closeBet(it) }
                         )
 
                     }

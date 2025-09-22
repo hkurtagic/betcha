@@ -1,5 +1,6 @@
 package com.example.betcha.presentation
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,12 +18,14 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -61,12 +64,14 @@ enum class SubmitState(
     var amount: Int? = null
 ) {
     SelectChoice("Select an option", false, yellowSubmit),
-    SubmitChoice("Submit choice", true, yellowSubmit),
-    CloseBet("Close bet", true, redSubmit),
+    AdjustStake("Change your Stake if you like", false, Color.Gray),
+    Pending("Waiting for Owner to select winning option", false, Color.Gray),
+    CloseBetState("Close bet", true, redSubmit),
     SelectWinningChoice("Select outcome", false, yellowSubmit),
     SubmitWinningChoice("Submit outcome", true, yellowSubmit),
-    LosMessage("You lost x point(s)", true, redSubmit),
-    WinMessage("You won x point(s)", true, greenSubmit)
+    LoseMessage("You lost x point(s)", true, redSubmit),
+    WinMessage("You won x point(s)", true, greenSubmit),
+    ByStander("", false, Color.Transparent)
 }
 
 /**
@@ -79,6 +84,10 @@ enum class SubmitState(
  */
 @Composable
 fun ProgressBarContent(elements: List<Choice>) {
+    Text(
+        modifier = Modifier.padding(start = 16.dp, top = 8.dp),
+        style = MaterialTheme.typography.titleMedium, text = "Bet destibution"
+    )
     Row(
         modifier = Modifier
             .padding(top = 8.dp)
@@ -89,15 +98,17 @@ fun ProgressBarContent(elements: List<Choice>) {
         elements.forEach { choice ->
             val clampedPercentage = choice.percentage.coerceIn(0f, 100f) / 100f
             val bgcolor = elements.indexOf(choice) % 10
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(fraction = clampedPercentage)
-                    .fillMaxHeight()
-                    .background(
-                        colorList[bgcolor]
-                    )
-                    .weight(clampedPercentage)
-            ) {}
+            if (clampedPercentage > 0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = clampedPercentage)
+                        .fillMaxHeight()
+                        .background(
+                            colorList[bgcolor]
+                        )
+                        .weight(clampedPercentage)
+                ) {}
+            }
         }
     }
 }
@@ -114,21 +125,32 @@ fun ProgressBarContent(elements: List<Choice>) {
  */
 @Composable
 fun ChoiceButtons(elements: List<Choice>, selectedChoice: String, onChoiceClick: (String) -> Unit) {
+    Text(
+        modifier = Modifier.padding(start = 16.dp, top = 8.dp),
+        style = MaterialTheme.typography.titleMedium, text = "Options"
+    )
     elements.forEach { choice ->
         val bgColor = elements.indexOf(choice) % 10
         var color = colorList[bgColor]
-        if (selectedChoice != choice.choice_id) color = color.copy(alpha = 0.6f)
+        var alpha = 1f
+        var enabled = false
+        if (selectedChoice != choice.choice_id) alpha = 0.6f
+        if (selectedChoice == "" || selectedChoice == choice.choice_id) enabled = true
         Button(
             onClick = { onChoiceClick(choice.choice_id) },
             modifier = Modifier
                 .fillMaxWidth()
+                .alpha(alpha)
                 .clip(shape)
                 .padding(top = 8.dp)
                 .height(48.dp),
             contentPadding = PaddingValues(horizontal = 16.dp),
+            enabled = enabled,
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorList[bgColor],
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = colorList[bgColor],
+                disabledContentColor = MaterialTheme.colorScheme.onPrimary
             ),
             elevation = ButtonDefaults.buttonElevation(0.dp),
         ) {
@@ -156,13 +178,45 @@ fun ChoiceButtons(elements: List<Choice>, selectedChoice: String, onChoiceClick:
 @Composable
 fun SubmitButton(state: SubmitState, onClick: () -> Unit) {
     var color = state.color
-    if (!state.active) color = color.copy(alpha = 0.6f)
+    var alpha = 1f
+    if (!state.active) alpha = 0.6f
+    Button(
+        onClick = { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(alpha)
+            .clip(shape)
+            .padding(top = 16.dp, bottom = 8.dp)
+            .height(48.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = state.color,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = ButtonDefaults.buttonElevation(0.dp),
+    ) {
+        var text = state.text
+        if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.CenterVertically),
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun CloseBet(onClick: () -> Unit) {
+    var state = SubmitState.CloseBetState
     Button(
         onClick = { onClick() },
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .padding(top = 8.dp)
+            .padding(top = 16.dp, bottom = 8.dp)
             .height(48.dp),
         contentPadding = PaddingValues(horizontal = 16.dp),
         colors = ButtonDefaults.buttonColors(
@@ -186,10 +240,36 @@ fun SubmitButton(state: SubmitState, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun BetCardv2(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
+fun BetCardv2(
+    user_id: String,
+    bet: Bet,
+    onChoiceClick: (BetStake) -> Unit,
+    onBetClose: (String) -> Unit
+) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedChoice by remember { mutableStateOf("") }
+    var submitState by remember { mutableStateOf(SubmitState.ByStander) }
     shape = RoundedCornerShape(16.dp)
+
+    LaunchedEffect(submitState) {
+        submitState = if (!bet.isClosed && bet.MyBet == null) {
+            SubmitState.SelectChoice
+        } else if (!bet.isClosed && bet.MyBet != null) {
+            SubmitState.AdjustStake
+        } else if (bet.user_id == user_id && bet.choices.none { c -> c.winningChoice }) {
+            SubmitState.SelectWinningChoice
+        } else if (bet.user_id != user_id && bet.choices.none { c -> c.winningChoice }) {
+            SubmitState.Pending
+        } else if (bet.MyBet != null && bet.choices.any { c -> c.winningChoice } && bet.MyBet.choice_id == bet.choices.first { c -> c.winningChoice }.choice_id) {
+            SubmitState.WinMessage
+        } else if (bet.MyBet != null && bet.choices.any { c -> c.winningChoice } && bet.MyBet.choice_id != bet.choices.first { c -> c.winningChoice }.choice_id) {
+            SubmitState.LoseMessage
+        } else {
+            SubmitState.ByStander
+        }
+    }
+
+
     Card(
         shape = shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -230,20 +310,67 @@ fun BetCardv2(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
-            ProgressBarContent(bet.choices)
+            if (bet.betStakes.isNotEmpty()) {
+                ProgressBarContent(bet.choices)
+            }
             ChoiceButtons(
                 bet.choices,
-                onChoiceClick = {
+                onChoiceClick = { choice_id ->
                     showDialog = true
+                    selectedChoice = choice_id
                 },
                 selectedChoice = selectedChoice
             )
-            val state = SubmitState.WinMessage
-            state.amount = 50
-            SubmitButton(
-                state = state,
-                onClick = {}
-            )
+            if (submitState != SubmitState.ByStander) {
+                SubmitButton(
+                    state = submitState,
+                    onClick = {
+                        when (submitState) {
+                            SubmitState.SelectChoice -> {
+                                if (selectedChoice != "") {
+                                    Log.i("SubmitButton", "SelectChoice")
+                                }
+                            }
+
+                            SubmitState.Pending -> {
+                                Log.i("SubmitButton", "Pending")
+                            }
+
+                            SubmitState.CloseBetState -> {
+                                Log.i("SubmitButton", "CloseBet")
+                            }
+
+                            SubmitState.SelectWinningChoice -> {
+                                Log.i("SubmitButton", "SelectWinningChoice")
+                            }
+
+                            SubmitState.SubmitWinningChoice -> {
+                                Log.i("SubmitButton", "SubmitWinningChoice")
+                            }
+
+                            SubmitState.LoseMessage -> {
+                                Log.i("SubmitButton", "LoseMessage")
+                            }
+
+                            SubmitState.WinMessage -> {
+                                Log.i("SubmitButton", "WinMessage")
+                            }
+
+                            SubmitState.AdjustStake -> {
+                                Log.i("SubmitButton", "AdjustStake")
+                            }
+
+                            SubmitState.ByStander -> {}
+                        }
+                    }
+                )
+            }
+            var test = submitState == SubmitState.SelectChoice
+            if ((user_id == bet.user_id && submitState == SubmitState.SelectChoice && !bet.isClosed) || (user_id == bet.user_id && submitState == SubmitState.AdjustStake && !bet.isClosed)) {
+                CloseBet(onClick = {
+                    onBetClose(bet.bet_id)
+                })
+            }
         }
     }
 }
@@ -264,9 +391,9 @@ fun PreviewBetCardv2() {
         ),
         MyBet = stake,
         bet_id = "1",
-        BetStakes = listOf(stake),
+        betStakes = listOf(stake),
         concludedInfo = null
     )
 
-    BetCardv2(bet = sampleBet, {})
+    BetCardv2(bet = sampleBet, user_id = "1", onChoiceClick = {}, onBetClose = {})
 }
