@@ -74,6 +74,11 @@ class DatabaseController {
             include: { Bet: { include: { choices: true, BetStake: true } } },
         })
     }
+    public async getUsersInGroup(group_pin: string): Promise<User[]> {
+        return await prisma.user.findMany({
+            where: { groupPin: group_pin },
+        })
+    }
 
     public async getUserByName(user_name: string): Promise<User | null> {
         return await prisma.user.findUnique({ where: { name: user_name } })
@@ -172,9 +177,7 @@ class DatabaseController {
         })
     }
 
-    public async updateWinningChoice(
-        choice_id: string
-    ): Promise<Choice | null> {
+    public async updateWinningChoice(choice_id: string): Promise<Choice | null> {
         return await prisma.choice.update({
             where: { choice_id: choice_id },
             data: { winningChoice: true },
@@ -191,9 +194,10 @@ class DatabaseController {
             where: {
                 user_id_bet_id: {
                     user_id: user_id,
-                    bet_id: bet_id
-                }
-            }, update: {
+                    bet_id: bet_id,
+                },
+            },
+            update: {
                 amount: amount,
             },
             create: {
@@ -229,7 +233,7 @@ class DatabaseController {
         choice_id: string
     ): Promise<BetStake | null> {
         return await prisma.betStake.findFirst({
-            where: { user_id: user_id, choice_id: choice_id}
+            where: { user_id: user_id, choice_id: choice_id },
         })
     }
 
@@ -252,12 +256,13 @@ class DatabaseController {
         const res = await prisma.betStake.findFirst({
             where: {
                 user_id: user_id,
-                bet_id: bet_id
-            }
+                bet_id: bet_id,
+            },
         })
-        console.log("-------------\n"+res)
-        if (res) {return true}
-        else return false
+        console.log('-------------\n' + res)
+        if (res) {
+            return true
+        } else return false
     }
 
     /* public async getBetsInGroup(group_pin: string): Promise<Bet[]> {

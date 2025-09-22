@@ -1,22 +1,29 @@
 ## <code>requestJoinGroup</code> [Client -> Server]
+
 ```json
 {
   "user_id": "example": "48be2808-b54c-4a05-b4f4-48385793c5cc",
   "group_pin": "example": "cmc26gzyw0000hq50i2o25nnp"
 }
 ```
+
 ### Responses
+
 ✅
+
 ```json
 {  "status": "example": 200 }
 ```
+
 ❌
+
 ```json
 {
   "status": "example": 400,
   "msg": "example": "user_id and group_pin needed"
 }
 ```
+
 </br>
 
 ## <code>requestCreateBet</code> [Client -> Server]
@@ -32,20 +39,26 @@
   ]
 }
 ```
+
 ### Responses
+
 ✅
+
 ```json
 {
   "status": "example": 200
 }
 ```
+
 ❌
+
 ```json
 {
   "status": "example": 400,
   "msg": "example": "user_id, bet_name or bet_choice not provided"
 }
 ```
+
 </br>
 
 ## <code>BetUpdate</code> [Client -> Server]
@@ -74,6 +87,7 @@
   ]
 }
 ```
+
 </br>
 
 ## <code>requestCreateBetStake</code> [Client -> Server]
@@ -86,8 +100,11 @@
   "amount": "example": 10.5
 }
 ```
+
 ### Response
+
 ✅
+
 ```json
 {
   "status": "example": 200,
@@ -99,13 +116,16 @@
   }
 }
 ```
+
 ❌
+
 ```json
 {
   "status": "example": 400,
   "msg": "example": "user_id, choice_id, bet_id or amount not provided"
 }
 ```
+
 </br>
 
 ## <code>requestCloseBet</code> [Client -> Server]
@@ -118,7 +138,9 @@
 ```
 
 ### Response
+
 ✅
+
 ```json
 {
   "status": "example": 200,
@@ -130,13 +152,16 @@
   }
 }
 ```
+
 ❌
+
 ```json
 {
   "status": "example": 400,
   "msg": "example": "user_id or bet_id not provided"
 }
 ```
+
 </br>
 
 ## <code>requestSelectWinningChoice</code> [Client -> Server]
@@ -147,7 +172,9 @@
   "choice_id": "example": "9ba2093a-eb07-46e8-b249-03e79d27e2b2"
 }
 ```
+
 ### Response
+
 ✅
 
 ```json
@@ -155,11 +182,36 @@
   "status": "example": 200
 }
 ```
+
 ❌
+
 ```json
 {
   "status": "example": 400,
   "msg": "example": "user_id or choice_id not provided"
 }
 ```
+
 </br>
+
+## <code>UserUpdate</code> [Client -> Server]
+
+```json
+[
+  {
+    "user_id": "82c53fe0-93a6-477f-8042-acb39acd5697",
+    "name": "ObjectiveMagahiAnaconda",
+    "groupPin": "cmfppgurm0006hq1s953n2tdj"
+  },
+  {
+    "user_id": "4d3dcccd-fdc1-43f3-aeb8-22fe4a8c97be",
+    "name": "WilfulDutchOstrich",
+    "groupPin": "cmfppgurm0006hq1s953n2tdj"
+  },
+  {
+    "user_id": "2952f664-29e3-4089-9fa3-596ef54f9452",
+    "name": "HistoricSaraikiNewt",
+    "groupPin": "cmfppgurm0006hq1s953n2tdj"
+  }
+]
+```

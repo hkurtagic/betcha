@@ -43,7 +43,7 @@ export type Choice = {
 
 export type BetStake = {
     user_id: string // Part of composite ID, and foreign key to User
-    choice_id: string // Part of composite ID, and foreign key to Choice
+    choice_id: string
     bet_id: string // Part of composite ID, and foreign key to Bet
     amount: number
     User?: User // The related User object

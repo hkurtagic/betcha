@@ -31,6 +31,7 @@ interface ClientToServerEvents {
  * @description Server emit | Client listen events
  */
 interface ServerToClientEvents {
+    UserUpdate: (data: string) => void
     BetUpdate: (data: string) => void
 }
 /**

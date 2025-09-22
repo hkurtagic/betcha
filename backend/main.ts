@@ -295,7 +295,11 @@ async function main() {
                         socket.join(group_pin)
                         callback({ status: HttpStatusCode.OK })
 
-                        // push update to new User
+                        // push updated member list to all users in group
+                        let users = await dbController.getUsersInGroup(group_pin)
+                        io.to(group_pin).emit('UserUpdate', JSON.stringify(users))
+
+                        // push list of existing bets to new User
                         let bets = await dbController.getBetsInGroup(group_pin)
                         bets.map((b) => delete b.openedBy)
                         socket.emit('BetUpdate', JSON.stringify(bets))
