@@ -72,6 +72,18 @@ fun GroupScreen(
                                 e.action.data
                             )
 
+                            is GroupViewModel.SnackAction.RetryUpdateStake -> groupViewModel.retrySetStake(
+                                e.action.data
+                            )
+
+                            is GroupViewModel.SnackAction.RetryCloseBet -> groupViewModel.retryCloseBet(
+                                e.action.data
+                            )
+
+                            is GroupViewModel.SnackAction.RetrySelectWinningChoice -> groupViewModel.retrySelectWinningChoice(
+                                e.action.data
+                            )
+
                             null -> Unit
                         }
                     }
@@ -149,9 +161,15 @@ fun GroupScreen(
                 ) {
                     items(betState) { bet ->
                         BetCardv2(
-                            userState.userId, bet, onChoiceClick = { betStake ->
+                            userState.userId,
+                            bet,
+                            onChoiceClick = { betStake ->
                                 groupViewModel.updateStake(betStake)
-                            }, onBetClose = { groupViewModel.closeBet(it) }
+                            },
+                            onBetClose = { groupViewModel.closeBet(it) },
+                            onWinningChoice = {
+                                groupViewModel.selectWinningChoice(it)
+                            }
                         )
 
                     }

@@ -196,7 +196,7 @@ fun SubmitButton(state: SubmitState, onClick: () -> Unit) {
         elevation = ButtonDefaults.buttonElevation(0.dp),
     ) {
         var text = state.text
-        if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
+        //if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
         Text(
             modifier = Modifier
                 .fillMaxWidth()
@@ -226,7 +226,7 @@ fun CloseBet(onClick: () -> Unit) {
         elevation = ButtonDefaults.buttonElevation(0.dp),
     ) {
         var text = state.text
-        if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
+        //if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
         Text(
             modifier = Modifier
                 .fillMaxWidth()
@@ -244,14 +244,17 @@ fun BetCardv2(
     user_id: String,
     bet: Bet,
     onChoiceClick: (BetStake) -> Unit,
-    onBetClose: (String) -> Unit
+    onBetClose: (String) -> Unit,
+    onWinningChoice: (String) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedChoice by remember { mutableStateOf("") }
     var submitState by remember { mutableStateOf(SubmitState.ByStander) }
+    //var closeState by remember { mutableStateOf(bet.isClosed) }
     shape = RoundedCornerShape(16.dp)
 
-    LaunchedEffect(submitState) {
+    LaunchedEffect(bet.isClosed, bet.concludedInfo) {
+        Log.i("BetCard | submitState", submitState.name)
         submitState = if (!bet.isClosed && bet.MyBet == null) {
             SubmitState.SelectChoice
         } else if (!bet.isClosed && bet.MyBet != null) {
@@ -316,8 +319,12 @@ fun BetCardv2(
             ChoiceButtons(
                 bet.choices,
                 onChoiceClick = { choice_id ->
-                    showDialog = true
+                    if (submitState == SubmitState.SelectChoice || submitState == SubmitState.AdjustStake) {
+                        showDialog = true
+                    }
                     selectedChoice = choice_id
+                    if (submitState == SubmitState.SelectWinningChoice) submitState =
+                        SubmitState.SubmitWinningChoice
                 },
                 selectedChoice = selectedChoice
             )
@@ -345,6 +352,7 @@ fun BetCardv2(
                             }
 
                             SubmitState.SubmitWinningChoice -> {
+                                onWinningChoice(selectedChoice)
                                 Log.i("SubmitButton", "SubmitWinningChoice")
                             }
 
@@ -365,11 +373,36 @@ fun BetCardv2(
                     }
                 )
             }
-            var test = submitState == SubmitState.SelectChoice
-            if ((user_id == bet.user_id && submitState == SubmitState.SelectChoice && !bet.isClosed) || (user_id == bet.user_id && submitState == SubmitState.AdjustStake && !bet.isClosed)) {
-                CloseBet(onClick = {
-                    onBetClose(bet.bet_id)
-                })
+            if (user_id == bet.user_id && !bet.isClosed) {
+//                CloseBet(onClick = {
+//                    onBetClose(bet.bet_id)
+//                    closeState = true
+//                })
+                Button(
+                    onClick = {
+                        onBetClose(bet.bet_id)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(shape)
+                        .padding(top = 16.dp, bottom = 8.dp)
+                        .height(48.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SubmitState.CloseBetState.color,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(0.dp),
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterVertically),
+                        text = SubmitState.CloseBetState.text,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -395,5 +428,10 @@ fun PreviewBetCardv2() {
         concludedInfo = null
     )
 
-    BetCardv2(bet = sampleBet, user_id = "1", onChoiceClick = {}, onBetClose = {})
+    BetCardv2(
+        bet = sampleBet,
+        user_id = "1",
+        onChoiceClick = {},
+        onBetClose = {},
+        onWinningChoice = {})
 }

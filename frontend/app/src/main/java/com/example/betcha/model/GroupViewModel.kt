@@ -11,6 +11,7 @@ import com.example.betcha.repository.BetCreationData
 import com.example.betcha.repository.BetRepository
 import com.example.betcha.repository.BetStake
 import com.example.betcha.repository.CloseBet
+import com.example.betcha.repository.WinningChoice
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +52,9 @@ class GroupViewModel @Inject constructor(
 
     sealed interface SnackAction {
         data class RetryCreateBet(val data: BetCreationData) : SnackAction
+        data class RetryUpdateStake(val data: BetStake) : SnackAction
+        data class RetryCloseBet(val data: String) : SnackAction
+        data class RetrySelectWinningChoice(val data: String) : SnackAction
     }
 
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
@@ -83,12 +87,53 @@ class GroupViewModel @Inject constructor(
     }
 
     fun onSetStakeError(stakeData: BetStake) {
-
+        emit(
+            UiEvent.ShowSnack(
+                message = "Failed to update stake",
+                type = SnackbarType.Error,
+                actionLabel = "Retry",
+                action = SnackAction.RetryUpdateStake(stakeData),
+                duration = SnackbarDuration.Long
+            )
+        )
     }
 
     fun retrySetStake(stakeData: BetStake) {
         updateStake(stakeData)
     }
+
+    fun onCloseBetError(betId: String) {
+        emit(
+            UiEvent.ShowSnack(
+                message = "Failed to close bet",
+                type = SnackbarType.Error,
+                actionLabel = "Retry",
+                action = SnackAction.RetryCloseBet(betId),
+                duration = SnackbarDuration.Long
+            )
+        )
+    }
+
+    fun retryCloseBet(betId: String) {
+        closeBet(betId)
+    }
+
+    fun onSelectWinningChoiceError(betId: String) {
+        emit(
+            UiEvent.ShowSnack(
+                message = "Failed to submit the selected winning choice",
+                type = SnackbarType.Error,
+                actionLabel = "Retry",
+                action = SnackAction.RetryCloseBet(betId),
+                duration = SnackbarDuration.Long
+            )
+        )
+    }
+
+    fun retrySelectWinningChoice(choiceId: String) {
+        selectWinningChoice(choiceId)
+    }
+
 //    init {
 //        //getUserData(userId)
 //        betRepository.subscribeToBetUpdates { updated ->
@@ -165,20 +210,38 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    fun closeBet(bet_id: String) {
+    fun closeBet(betId: String) {
         viewModelScope.launch {
-            val user_id = _sessionState.value.userId
             betRepository.closeBet(
-                closeBet = CloseBet(user_id, bet_id)
+                CloseBet(
+                    user_id = _sessionState.value.userId,
+                    bet_id = betId
+                )
             ) { response ->
                 if (response["status"] == 200) {
-                    onSuccess("Stake set on Bet")
+                    onSuccess("Bet successfully closed")
                 } else {
-                    Log.i("GroupViewModel", "Could not close bet: " + bet_id)
+                    onCloseBetError(betId)
                 }
             }
         }
     }
 
+    fun selectWinningChoice(choiceId: String) {
+        viewModelScope.launch {
+            betRepository.selectWinningChoice(
+                WinningChoice(
+                    user_id = _sessionState.value.userId,
+                    choice_id = choiceId
+                )
+            ) { response ->
+                if (response["status"] == 200) {
+                    onSuccess("Winning choice successfully selected")
+                } else {
+                    onSelectWinningChoiceError(choiceId)
+                }
+            }
+        }
+    }
 
 }
