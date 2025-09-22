@@ -1,0 +1,272 @@
+package com.example.betcha.presentation
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.betcha.repository.Bet
+import com.example.betcha.repository.BetStake
+import com.example.betcha.repository.Choice
+
+//TODO: implement logic
+
+var shape = RoundedCornerShape(32.dp)
+
+val betHeader = Color(0xFF3F3FFF)
+val redSubmit = Color(0xFFFF3F3F)
+val greenSubmit = Color(0xFF3FFF3F)
+val yellowSubmit = Color(0xFFFFC23F)
+
+val colorList = listOf(
+    Color(0xFFFF593F),
+    Color(0xFFFF9C3F),
+    Color(0xFFFFD23F),
+    Color(0xFFA2FF3F),
+    Color(0xFF3FFF53),
+    Color(0xFF3FFFC2),
+    Color(0xFF3FCFFF),
+    Color(0xFF3F5FFF),
+    Color(0xFF9F3FFF),
+    Color(0xFFFF3FE5),
+)
+
+enum class SubmitState(
+    val text: String,
+    val active: Boolean,
+    val color: Color,
+    var amount: Int? = null
+) {
+    SelectChoice("Select an option", false, yellowSubmit),
+    SubmitChoice("Submit choice", true, yellowSubmit),
+    CloseBet("Close bet", true, redSubmit),
+    SelectWinningChoice("Select outcome", false, yellowSubmit),
+    SubmitWinningChoice("Submit outcome", true, yellowSubmit),
+    LosMessage("You lost x point(s)", true, redSubmit),
+    WinMessage("You won x point(s)", true, greenSubmit)
+}
+
+/**
+ * Displays a progress bar composed of colored segments.
+ *
+ * The width of each segment is based on its corresponding percentage value,
+ * with colors assigned from a predefined list.
+ *
+ * @param elements A list of [Choice] objects, each representing a segment.
+ */
+@Composable
+fun ProgressBarContent(elements: List<Choice>) {
+    Row(
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .height(48.dp)
+            .clip(shape),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        elements.forEach { choice ->
+            val clampedPercentage = choice.percentage.coerceIn(0f, 100f) / 100f
+            val bgcolor = elements.indexOf(choice) % 10
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(fraction = clampedPercentage)
+                    .fillMaxHeight()
+                    .background(
+                        colorList[bgcolor]
+                    )
+                    .weight(clampedPercentage)
+            ) {}
+        }
+    }
+}
+
+/**
+ * Displays a list of clickable buttons, each representing a choice.
+ *
+ * The buttons are colored based on their position in the list, and the currently selected button
+ * is visually distinct. Clicking a button triggers a callback with the ID of the selected choice.
+ *
+ * @param elements A list of [Choice] objects, each containing the data for a button.
+ * @param selectedChoice The ID of the currently selected choice, used to highlight the button.
+ * @param onChoiceClick A lambda function that is invoked with the ID of the clicked choice.
+ */
+@Composable
+fun ChoiceButtons(elements: List<Choice>, selectedChoice: String, onChoiceClick: (String) -> Unit) {
+    elements.forEach { choice ->
+        val bgColor = elements.indexOf(choice) % 10
+        var color = colorList[bgColor]
+        if (selectedChoice != choice.choice_id) color = color.copy(alpha = 0.6f)
+        Button(
+            onClick = { onChoiceClick(choice.choice_id) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .padding(top = 8.dp)
+                .height(48.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colorList[bgColor],
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            elevation = ButtonDefaults.buttonElevation(0.dp),
+        ) {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = choice.text,
+                textAlign = TextAlign.Start
+            )
+        }
+    }
+}
+
+/**
+ * Displays a customizable submit button.
+ *
+ * The button's appearance, including its color, text, and active state, is
+ * determined by a [SubmitState] object. The button's text can also be
+ * dynamically updated with a numerical value if provided.
+ *
+ * @param state The [SubmitState] object that defines the button's properties.
+ * @param onClick A lambda function that is invoked when the button is clicked.
+ */
+@Composable
+fun SubmitButton(state: SubmitState, onClick: () -> Unit) {
+    var color = state.color
+    if (!state.active) color = color.copy(alpha = 0.6f)
+    Button(
+        onClick = { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .padding(top = 8.dp)
+            .height(48.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = state.color,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = ButtonDefaults.buttonElevation(0.dp),
+    ) {
+        var text = state.text
+        if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.CenterVertically),
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun BetCardv2(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedChoice by remember { mutableStateOf("") }
+    shape = RoundedCornerShape(16.dp)
+    Card(
+        shape = shape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        shape = RoundedCornerShape(32.dp)
+        if (showDialog) {
+            BetDetails(
+                bet,
+                choice = bet.choices.find { c -> c.choice_id == selectedChoice }!!,
+                onDismiss = { showDialog = false },
+                onConfirmBet = {
+                    onChoiceClick(it)
+                    showDialog = false
+                }
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(shape = shape)
+                    .background(betHeader)
+                    .height(48.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = bet.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+            ProgressBarContent(bet.choices)
+            ChoiceButtons(
+                bet.choices,
+                onChoiceClick = {
+                    showDialog = true
+                },
+                selectedChoice = selectedChoice
+            )
+            val state = SubmitState.WinMessage
+            state.amount = 50
+            SubmitButton(
+                state = state,
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewBetCardv2() {
+    val stake = BetStake(user_id = "1", bet_id = "1", amount = 100.00, choice_id = "1")
+    val sampleBet = Bet(
+        user_id = "1",
+        name = "Who will win the match?",
+        isClosed = false,
+        potSize = 1200.00,
+        choices = listOf(
+            Choice("1", "Team A", false, 20.0f),
+            Choice("2", "Team B", false, 15.0f),
+            Choice("3", "Team C", false, 65.0f)
+        ),
+        MyBet = stake,
+        bet_id = "1",
+        BetStakes = listOf(stake),
+        concludedInfo = null
+    )
+
+    BetCardv2(bet = sampleBet, {})
+}
