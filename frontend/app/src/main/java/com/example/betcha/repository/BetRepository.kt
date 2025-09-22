@@ -21,8 +21,8 @@ interface BetRepository {
     //fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit)
     fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit))
     fun sendStake(stake: BetStake, callback: ((JSONObject) -> Unit))
-    fun closeBet(betId: String, userId: String, callback: ((JSONObject) -> Unit))
-    fun selectWinningChoice(userId: String, choiceId: String, callback: ((JSONObject) -> Unit))
+    fun closeBet(closeBet: CloseBet, callback: ((JSONObject) -> Unit))
+    fun selectWinningChoice(winningChoice: WinningChoice, callback: ((JSONObject) -> Unit))
 }
 
 @Serializable
@@ -166,17 +166,20 @@ data class Winner(
     val user_id: String,
     val name: String? = "",
     val amount: Double? = null
-) {
-    companion object {
-        fun createFromUser(user: User, amount: Double): Winner {
-            return Winner(
-                user_id = user.user_id,
-                name = user.name,
-                amount = amount
-            )
-        }
-    }
-}
+)
+
+@Serializable
+data class CloseBet(
+    val user_id: String,
+    val bet_id: String
+)
+
+@Serializable
+data class WinningChoice(
+    val user_id: String,
+    val choice_id: String
+)
+
 
 @Singleton
 class BetRepositoryImpl @Inject constructor(
@@ -273,11 +276,8 @@ class BetRepositoryImpl @Inject constructor(
         )
     }
 
-    override fun closeBet(betId: String, userId: String, callback: ((JSONObject) -> Unit)) {
-        val closeBetObject = JSONObject()
-        closeBetObject.put("user_id", userId)
-        closeBetObject.put("bet_id", betId)
-        val json = Json.encodeToString(closeBetObject)
+    override fun closeBet(closeBet: CloseBet, callback: ((JSONObject) -> Unit)) {
+        val json = Json.encodeToString(closeBet)
         Log.i("Repo | closeBet", json)
         socket.emit(
             "requestCloseBet",
@@ -287,14 +287,10 @@ class BetRepositoryImpl @Inject constructor(
     }
 
     override fun selectWinningChoice(
-        userId: String,
-        choiceId: String,
+        winningChoice: WinningChoice,
         callback: ((JSONObject) -> Unit)
     ) {
-        val closeBetObject = JSONObject()
-        closeBetObject.put("user_id", userId)
-        closeBetObject.put("choice_id", choiceId)
-        val json = Json.encodeToString(closeBetObject)
+        val json = Json.encodeToString(winningChoice)
         Log.i("Repo | selectWinningChoice", json)
         socket.emit(
             "requestSelectWinningChoice",
