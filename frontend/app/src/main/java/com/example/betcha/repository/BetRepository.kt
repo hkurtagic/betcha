@@ -15,13 +15,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface BetRepository {
+    val users: StateFlow<List<User>>
     val bets: StateFlow<List<Bet>>
 
     //fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit)
     fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit))
-    fun sendStake(stake: BetStake)
+    fun sendStake(stake: BetStake, callback: ((JSONObject) -> Unit))
 }
-
 
 @Serializable
 data class BetCreationData(
@@ -29,6 +29,7 @@ data class BetCreationData(
     val text: String,
     val selections: List<String>
 )
+
 
 @Serializable
 data class BetDTO(
@@ -41,18 +42,39 @@ data class BetDTO(
     //val concludedInfo: ConcludedInfo? = null
 ) {
     fun mapToBetObject(myUserId: String): Bet {
-        val myBet = (BetStake.filter { b -> b.user_id == myUserId }).getOrNull(0)
+        val myBetStake = (BetStake.filter { b -> b.user_id == myUserId }).getOrNull(0)
         val potSize = (BetStake.sumOf { b -> b.amount })
+        val mappedChoices = choices.map { c -> c.mapToChoiceObject(potSize, BetStake) }
+
+        var concludedInfo: ConcludedInfo? = null
+        if (isClosed && mappedChoices.any { c -> c.winningChoice }) {
+            val winChoice = mappedChoices.filter { c -> c.winningChoice }[0]
+            val totalWinningStake =
+                BetStake.filter { it.choice_id == winChoice.choice_id }.sumOf { it.amount }
+            val myWin = (myBetStake?.amount?.div(totalWinningStake)?.times(potSize))
+            val winners =
+                (BetStake.filter { bs -> bs.choice_id == winChoice.choice_id }).map { bs ->
+                    Winner(
+                        bs.user_id,
+                        amount = bs.amount
+                    )
+                }
+            concludedInfo = ConcludedInfo(
+                didWin = (myBetStake?.choice_id == winChoice.choice_id),
+                myWin = myWin,
+                winners = winners,
+            )
+        }
         return Bet(
             user_id = user_id,
             bet_id = bet_id,
             name = name,
             isClosed = isClosed,
-            choices = choices.map { c -> c.mapToChoiceObject(potSize, BetStake) },
-            BetStakes = BetStake,
+            choices = mappedChoices,
+            betStakes = BetStake,
             potSize = potSize,
-            MyBet = myBet,
-            concludedInfo = null
+            MyBet = myBetStake,
+            concludedInfo = concludedInfo
         )
     }
 }
@@ -91,7 +113,7 @@ data class Bet(
     val isClosed: Boolean,
     val potSize: Double,
     val choices: List<Choice>,
-    val BetStakes: List<BetStake> = emptyList(),
+    val betStakes: List<BetStake> = emptyList(),
     val MyBet: BetStake? = null,
     val concludedInfo: ConcludedInfo? = null
 )
@@ -116,30 +138,54 @@ data class BetStake(
     val amount: Double
 )
 
-@Serializable
-data class MyStake(
-    val choice_id: String,
-    val amount: Double
-)
+//@Serializable
+//data class MyStake(
+//    val choice_id: String,
+//    val amount: Double
+//)
 
 @Serializable
 data class ConcludedInfo(
+    val didWin: Boolean, // true if current user won
+    val myWin: Double?,
     val winners: List<Winner>,
-    val didWin: Boolean,
-    val winnings: Double
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+@JsonIgnoreUnknownKeys
+data class User(
+    val user_id: String,
+    val name: String
 )
 
 @Serializable
 data class Winner(
-    val userName: String,
-    val amount: Double
-)
+    val user_id: String,
+    val name: String? = "",
+    val amount: Double? = null
+) {
+    companion object {
+        fun createFromUser(user: User, amount: Double): Winner {
+            return Winner(
+                user_id = user.user_id,
+                name = user.name,
+                amount = amount
+            )
+        }
+    }
+}
 
 @Singleton
 class BetRepositoryImpl @Inject constructor(
     private val socket: Socket,
     private val sessionManager: SessionManager
 ) : BetRepository {
+    private var _users = MutableStateFlow<List<User>>(emptyList())
+    override val users: StateFlow<List<User>>
+        get() {
+            return _users.asStateFlow()
+        }
     private var _bets = MutableStateFlow<List<Bet>>(emptyList())
     override val bets: StateFlow<List<Bet>>
         get() {
@@ -151,8 +197,19 @@ class BetRepositoryImpl @Inject constructor(
 //    }
 
     init {
+        socket.on("UserUpdate") { args ->
+            val usersInGroup: List<User> = Json.decodeFromString((args as Array<*>)[0] as String)
+            _users.value = usersInGroup
+            Log.i(
+                "Repo | UserUpdate",
+                "Received ${users.value.size} Users in Group \n Usernames of members: \n ${
+                    users.value.map { it.name + "\n" }
+                }"
+            )
+
+        }
         socket.on("BetUpdate") { args ->
-            val incoming_bets: List<BetDTO> = Json.decodeFromString((args as Array<*>)[0] as String)
+            val incomingBets: List<BetDTO> = Json.decodeFromString((args as Array<*>)[0] as String)
             //Json.decodeFromString(((args as Array<*>)[0] as JSONArray).toString())
             //Log.i("BetUpdate0", (args as Array<*>)[0].toString())
             //Log.i("BetUpdate1", Json.encodeToString<Array<BetDTO>>(args))
@@ -164,7 +221,7 @@ class BetRepositoryImpl @Inject constructor(
             //_bets.update { it.toMutableList().apply { it + b } }
 //            val copied = b.map { it.copy() }
 //            _bets.update { it + copied }
-            val copied = incoming_bets.map {
+            val copied = incomingBets.map {
                 it.mapToBetObject(sessionManager.sessionState.value.userId).copy()
             }
             _bets.value = copied
@@ -184,7 +241,7 @@ class BetRepositoryImpl @Inject constructor(
 //                    sessionManager.sessionState.value.userId
 //                )
 //            }
-            Log.i("BetUpdate2", "${bets.value}")
+            Log.i("Repo | BetUpdate", "${bets.value}")
         }
     }
 
@@ -201,15 +258,16 @@ class BetRepositoryImpl @Inject constructor(
         )
     }
 
-    override fun sendStake(stake: BetStake) {
+    override fun sendStake(stake: BetStake, callback: ((JSONObject) -> Unit)) {
         val json = Json.encodeToString(stake)
         Log.i("send stake", json)
         socket.emit(
             "requestCreateBetStake",
             json,
-            callback = { response ->
-                Log.i("bet stake creation", response.toString())
-            }
+            callback = callback
+            /*{ response ->
+                Log.i("BetRepo | bet stake creation", response.toString())
+            }*/
         )
     }
 
