@@ -1,6 +1,7 @@
 package com.example.betcha.presentation
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import com.example.betcha.presentation.components.WinnerDetails
 import com.example.betcha.repository.Bet
 import com.example.betcha.repository.BetStake
 import com.example.betcha.repository.Choice
+import com.example.betcha.repository.Winner
 
 //TODO: implement logic
 
@@ -136,6 +138,7 @@ fun ChoiceButtons(
     elements: List<Choice>,
     isBetClosed: Boolean,
     selectedChoice: String,
+    myBet: BetStake?,
     concludedInfo: () -> Boolean,
     onChoiceClick: (String) -> Unit
 ) {
@@ -157,7 +160,7 @@ fun ChoiceButtons(
             modifier = Modifier
                 .fillMaxWidth()
                 .alpha(alpha)
-                .clip(shape)
+                //.clip(shape)
                 .padding(top = 8.dp)
                 .height(48.dp),
             contentPadding = PaddingValues(horizontal = 16.dp),
@@ -168,7 +171,12 @@ fun ChoiceButtons(
                 disabledContainerColor = colorList[bgColor],
                 disabledContentColor = MaterialTheme.colorScheme.onPrimary
             ),
-            elevation = ButtonDefaults.buttonElevation(0.dp),
+            elevation = ButtonDefaults.buttonElevation(2.dp),
+            border =
+            if (choice.choice_id == myBet?.choice_id) BorderStroke(
+                2.dp,
+                MaterialTheme.colorScheme.primary
+            ) else BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
         ) {
             Text(
                 modifier = Modifier
@@ -308,6 +316,7 @@ fun BetCardv2(
                 onConfirmBet = {
                     onChoiceClick(it)
                     showDialog = false
+                    submitState = SubmitState.AdjustStake
                 }
             )
         }
@@ -347,10 +356,19 @@ fun BetCardv2(
                 },
                 selectedChoice = selectedChoice,
                 isBetClosed = bet.isClosed,
+                myBet = bet.MyBet,
                 concludedInfo = { bet.concludedInfo != null }
             )
             if (submitState == SubmitState.WinMessage || submitState == SubmitState.LoseMessage) {
-                submitState.text = submitState.text.replace("x", bet.MyBet?.amount.toString())
+                if (submitState == SubmitState.WinMessage) {
+                    submitState.text = submitState.text.replace(
+                        "x",
+                        bet.concludedInfo?.winners?.first { winner: Winner -> winner.user_id == user_id }?.amount
+                            .toString()
+                    )
+                } else {
+                    submitState.text = submitState.text.replace("x", bet.MyBet?.amount.toString())
+                }
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier.fillMaxWidth()
@@ -456,7 +474,8 @@ fun BetCardv2(
             if (showWinners) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     bet.concludedInfo!!.winners.forEach { winner ->
                         WinnerDetails(winner)

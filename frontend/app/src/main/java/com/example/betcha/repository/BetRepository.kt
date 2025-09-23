@@ -59,7 +59,7 @@ data class BetDTO(
                     Winner(
                         bs.user_id,
                         name = usersInGroup?.first { it.user_id == bs.user_id }?.name ?: "",
-                        amount = bs.amount
+                        amount = bs.amount.div(totalWinningStake).times(potSize)
                     )
                 }
             concludedInfo = ConcludedInfo(

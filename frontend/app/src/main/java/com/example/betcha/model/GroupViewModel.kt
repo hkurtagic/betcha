@@ -202,7 +202,7 @@ class GroupViewModel @Inject constructor(
             betStake.user_id = _sessionState.value.userId
             betRepository.sendStake(betStake) { response ->
                 if (response["status"] == 200) {
-                    onSuccess("Stake set on Bet")
+                    onSuccess("Stake updated")
                 } else {
                     onSetStakeError(betStake)
                 }
