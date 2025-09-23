@@ -53,6 +53,7 @@ import com.example.betcha.model.HomeViewModel
 import com.example.betcha.model.SessionManager
 import com.example.betcha.presentation.components.AppSnackbarHost
 import com.example.betcha.presentation.components.AppSnackbarVisuals
+import com.example.betcha.presentation.components.UiEvent
 import com.example.betcha.presentation.components.rememberAppSnackbarState
 import com.example.betcha.ui.theme.BetchaTheme
 import kotlinx.coroutines.android.awaitFrame
@@ -86,8 +87,8 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         homeViewModel.events.collectLatest { e ->
             when (e) {
-                is HomeViewModel.UiEvent.ShowSnack -> {
-                    val result = snackbarHostState.showSnackbar(
+                is UiEvent.ShowSnack -> {
+                    snackbarHostState.showSnackbar(
                         AppSnackbarVisuals(
                             message = e.message,
                             duration = e.duration,
@@ -104,7 +105,7 @@ fun HomeScreen(
         snackbarHost = {
             AppSnackbarHost(
                 snackbarHostState,
-                modifier = Modifier
+                modifier = modifier
                     .imePadding()
                     .navigationBarsPadding()
             )
@@ -114,7 +115,7 @@ fun HomeScreen(
         )
     { innerPadding ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
@@ -136,7 +137,7 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = modifier.height(36.dp))
 
             OutlinedTextField(
                 state = state.username,
@@ -171,7 +172,7 @@ fun HomeScreen(
                     .focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 onKeyboardAction = { performDefaultAction: () -> Unit ->
-                    homeViewModel.validateInput(navController)
+                    homeViewModel.validateInput()
                     performDefaultAction()
                 },
                 isError = homeViewModel.groupPINError.value != "",
@@ -182,13 +183,13 @@ fun HomeScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    homeViewModel.validateInput(navController)
+                    homeViewModel.validateInput()
                 },
-                modifier = Modifier.fillMaxWidth(0.6f),
+                modifier = modifier.fillMaxWidth(0.6f),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
@@ -201,7 +202,7 @@ fun HomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = modifier.height(24.dp))
         }
     }
 }

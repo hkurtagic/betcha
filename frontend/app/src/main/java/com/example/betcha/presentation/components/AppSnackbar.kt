@@ -10,8 +10,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import com.example.betcha.model.SnackAction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+
+sealed interface UiEvent {
+    data class ShowSnack(
+        val message: String,
+        val type: SnackbarType = SnackbarType.Info,
+        val actionLabel: String? = null,
+        val action: SnackAction? = null,
+        val duration: SnackbarDuration = SnackbarDuration.Short
+    ) : UiEvent
+}
 
 enum class SnackbarType { Success, Error, Info }
 
@@ -34,14 +46,14 @@ class SnackbarManager(
     private val hostState: SnackbarHostState,
     private val scope: CoroutineScope
 ) {
-    fun showSuccess(message: String, actionLabel: String? = null) =
-        show(message, SnackbarType.Success, actionLabel)
-
-    fun showError(message: String, actionLabel: String? = null) =
-        show(message, SnackbarType.Error, actionLabel)
-
-    fun showInfo(message: String, actionLabel: String? = null) =
-        show(message, SnackbarType.Info, actionLabel)
+//    fun showSuccess(message: String, actionLabel: String? = null) =
+//        show(message, SnackbarType.Success, actionLabel)
+//
+//    fun showError(message: String, actionLabel: String? = null) =
+//        show(message, SnackbarType.Error, actionLabel)
+//
+//    fun showInfo(message: String, actionLabel: String? = null) =
+//        show(message, SnackbarType.Info, actionLabel)
 
     private fun show(message: String, type: SnackbarType, actionLabel: String?) {
         scope.launch {

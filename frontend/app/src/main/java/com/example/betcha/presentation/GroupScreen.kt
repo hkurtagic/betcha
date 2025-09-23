@@ -32,8 +32,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.betcha.model.GroupViewModel
+import com.example.betcha.model.SnackAction
 import com.example.betcha.presentation.components.AppSnackbarHost
 import com.example.betcha.presentation.components.AppSnackbarVisuals
+import com.example.betcha.presentation.components.UiEvent
 import com.example.betcha.presentation.components.rememberAppSnackbarState
 import com.example.betcha.ui.theme.BetchaTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -56,7 +58,7 @@ fun GroupScreen(
     LaunchedEffect(Unit) {
         groupViewModel.events.collectLatest { e ->
             when (e) {
-                is GroupViewModel.UiEvent.ShowSnack -> {
+                is UiEvent.ShowSnack -> {
                     val result = snackbarHostState.showSnackbar(
                         AppSnackbarVisuals(
                             message = e.message,
@@ -67,19 +69,19 @@ fun GroupScreen(
                     )
                     if (result == SnackbarResult.ActionPerformed) {
                         when (e.action) {
-                            is GroupViewModel.SnackAction.RetryCreateBet -> groupViewModel.retryCreateBet(
+                            is SnackAction.RetryCreateBet -> groupViewModel.retryCreateBet(
                                 e.action.data
                             )
 
-                            is GroupViewModel.SnackAction.RetryUpdateStake -> groupViewModel.retrySetStake(
+                            is SnackAction.RetryUpdateStake -> groupViewModel.retrySetStake(
                                 e.action.data
                             )
 
-                            is GroupViewModel.SnackAction.RetryCloseBet -> groupViewModel.retryCloseBet(
+                            is SnackAction.RetryCloseBet -> groupViewModel.retryCloseBet(
                                 e.action.data
                             )
 
-                            is GroupViewModel.SnackAction.RetrySelectWinningChoice -> groupViewModel.retrySelectWinningChoice(
+                            is SnackAction.RetrySelectWinningChoice -> groupViewModel.retrySelectWinningChoice(
                                 e.action.data
                             )
 

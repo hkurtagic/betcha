@@ -4,17 +4,14 @@ import android.util.Log
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.betcha.Screen
 import com.example.betcha.api.ApiNewUser
 import com.example.betcha.api.RetrofitClient
-import com.example.betcha.model.GroupViewModel.SnackAction
-import com.example.betcha.model.GroupViewModel.UiEvent
 import com.example.betcha.presentation.components.SnackbarType
-import com.example.betcha.repository.BetCreationData
+import com.example.betcha.presentation.components.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +22,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sessionManager: SessionManager
 ) :
-    ViewModel(),
-    DefaultLifecycleObserver {
+    ViewModel() {
     init {
         getRandomUsername()
     }
@@ -53,17 +50,6 @@ class HomeViewModel @Inject constructor(
             return _state.asStateFlow()
         }
 
-    sealed interface UiEvent {
-        data class ShowSnack(
-            val message: String,
-            val type: SnackbarType = SnackbarType.Info,
-            val actionLabel: String? = null,
-            val action: SnackAction? = null,
-            val duration: SnackbarDuration = SnackbarDuration.Short
-        ) : UiEvent
-    }
-    sealed interface SnackAction {
-    }
 
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
@@ -73,12 +59,23 @@ class HomeViewModel @Inject constructor(
             viewModelScope.launch { _events.emit(event) }
         }
     }
-    fun onGetRandomUsernameError(errorMessage: String) {
+
+    private fun onGetRandomUsernameError(errorMessage: String) {
         emit(
             UiEvent.ShowSnack(
                 message = errorMessage,
                 type = SnackbarType.Error,
-                duration = SnackbarDuration.Long
+                duration = SnackbarDuration.Short
+            )
+        )
+    }
+
+    private fun onGroupButtonError(errorMessage: String) {
+        emit(
+            UiEvent.ShowSnack(
+                message = errorMessage,
+                type = SnackbarType.Error,
+                duration = SnackbarDuration.Short
             )
         )
     }
@@ -105,7 +102,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun validateInput(navController: NavController) {
+    fun validateInput() {
         // check if all filled
         groupPINError.value = ""
         usernameError.value = ""
@@ -121,14 +118,12 @@ class HomeViewModel @Inject constructor(
                 )
                 when (response.code()) {
                     in 200..300 -> {
-                        //Log.i("res body", response.body().toString())
-                        // _sessionState.up .updateSession(SessionState().fromApiUser(response.body()!!))
                         _sessionState.update { sessionManager.fromApiUser(response.body()!!).sessionState.value }
                         Log.i("NewUser", sessionManager.toString())
                     }
 
                     400 -> {
-                        usernameError.value = "Username missing"
+                        usernameError.value = "Username is required"
                     }
 
                     406 -> {
@@ -137,10 +132,12 @@ class HomeViewModel @Inject constructor(
 
                     else -> {
                         val errorMsg = response.errorBody()?.string()
+                        onGroupButtonError("Error: Server responded with ${response.code()}: $errorMsg")
                         Log.i("api error: ", "HTTP ${response.code()}: $errorMsg")
                     }
                 }
             } catch (e: Exception) {
+                onGroupButtonError("Failed to connect to Server")
                 Log.i("api error: ", "Network error: ${e.localizedMessage}")
             }
         }

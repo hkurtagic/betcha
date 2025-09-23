@@ -1,8 +1,8 @@
 package com.example.betcha.presentation
 
-import androidx.compose.foundation.BorderStroke
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,181 +12,501 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.betcha.R
+import com.example.betcha.presentation.components.WinnerDetails
 import com.example.betcha.repository.Bet
 import com.example.betcha.repository.BetStake
 import com.example.betcha.repository.Choice
+import com.example.betcha.repository.Winner
 
-@Composable
-fun SelectionButton(
-    choice_id: String,
-    text: String,
-    percentage: Float,
-    onChoiceClick: (String) -> Unit,
-    isMyBet: Boolean
+//TODO: implement logic
+
+var shape = RoundedCornerShape(32.dp)
+
+val betHeader = Color(0xFF3F3FFF)
+val redSubmit = Color(0xFFFF3F3F)
+val greenSubmit = Color(0xFF3FFF3F)
+val yellowSubmit = Color(0xFFFFC23F)
+
+val colorList = listOf(
+    Color(0xFFFF593F),
+    Color(0xFFFF9C3F),
+    Color(0xFFFFD23F),
+    Color(0xFFA2FF3F),
+    Color(0xFF3FFF53),
+    Color(0xFF3FFFC2),
+    Color(0xFF3FCFFF),
+    Color(0xFF3F5FFF),
+    Color(0xFF9F3FFF),
+    Color(0xFFFF3FE5),
+)
+
+enum class SubmitState(
+    var text: String,
+    val active: Boolean,
+    val color: Color,
+    var amount: Int? = null
 ) {
-    val clampedPercentage = percentage.coerceIn(0f, 100f) / 100f
-    val shape = RoundedCornerShape(8.dp)
+    SelectChoice("Select an option", false, yellowSubmit),
+    AdjustStake("Change your Stake if you like", false, Color.Gray),
+    Pending("Waiting for Owner to select winning option", false, Color.Gray),
+    CloseBetState("Close bet", true, redSubmit),
+    SelectWinningChoice("Select outcome", false, yellowSubmit),
+    SubmitWinningChoice("Submit outcome", true, yellowSubmit),
+    LoseMessage("You lost x point(s)", true, redSubmit),
+    WinMessage("You won x point(s)", true, greenSubmit),
+    ByStander("", false, Color.Transparent)
+}
 
-    Button(
-        onClick = { onChoiceClick(choice_id) },
+/**
+ * Displays a progress bar composed of colored segments.
+ *
+ * The width of each segment is based on its corresponding percentage value,
+ * with colors assigned from a predefined list.
+ *
+ * @param elements A list of [Choice] objects, each representing a segment.
+ */
+@Composable
+fun ProgressBarContent(elements: List<Choice>) {
+    Row(
         modifier = Modifier
-            .fillMaxWidth()
+            //.padding(top = 8.dp)
             .height(48.dp)
             .clip(shape),
-        contentPadding = PaddingValues(0.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onPrimaryFixed
-        ),
-        elevation = ButtonDefaults.buttonElevation(0.dp),
-        border = if (isMyBet) BorderStroke(
-            2.dp,
-            MaterialTheme.colorScheme.primary
-        ) else BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
-
-        ) {
-        Box(
-            modifier = Modifier
-            //.fillMaxSize()
-            //.border(1.dp, Color.Gray, shape)
-        ) {
-            // Background for whole bar
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Transparent)
-            )
-            // Gradient filled part
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(clampedPercentage)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = if (isMyBet) listOf(
-                                MaterialTheme.colorScheme.primaryFixed,
-                                MaterialTheme.colorScheme.primary
-                            ) else listOf(
-                                MaterialTheme.colorScheme.primaryFixed,
-                                MaterialTheme.colorScheme.primaryFixedDim
-                            )
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        elements.forEach { choice ->
+            val clampedPercentage = choice.percentage.coerceIn(0f, 100f) / 100f
+            val bgcolor = elements.indexOf(choice) % 10
+            if (clampedPercentage > 0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = clampedPercentage)
+                        .fillMaxHeight()
+                        .background(
+                            colorList[bgcolor]
                         )
-                    )
-            )
-
-            // Content
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = text,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${percentage.toInt()}%",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                        .weight(clampedPercentage)
+                ) {}
             }
         }
     }
 }
 
-// TODO: onClick open details
+/**
+ * Displays a list of clickable buttons, each representing a choice.
+ *
+ * The buttons are colored based on their position in the list, and the currently selected button
+ * is visually distinct. Clicking a button triggers a callback with the ID of the selected choice.
+ *
+ * @param elements A list of [Choice] objects, each containing the data for a button.
+ * @param selectedChoice The ID of the currently selected choice, used to highlight the button.
+ * @param onChoiceClick A lambda function that is invoked with the ID of the clicked choice.
+ */
 @Composable
-fun BetCard(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
+fun ChoiceButton(
+    choice: Choice,
+    bgColor: Int,
+    isBetClosed: Boolean,
+    selectedChoice: String,
+    myBet: BetStake?,
+    concludedInfo: () -> Boolean,
+    onChoiceClick: (String) -> Unit
+) {
+    val isDone = concludedInfo()
+    val color = colorList[bgColor]
+    var alpha = 1f
+    var enabled = false
+    if (selectedChoice != choice.choice_id && !(isBetClosed && isDone)) alpha = 0.6f
+    if (selectedChoice == "" || selectedChoice == choice.choice_id || (isBetClosed && !isDone)) enabled =
+        true
+
+    Button(
+        onClick = { onChoiceClick(choice.choice_id) },
+        modifier = Modifier
+            //.fillMaxWidth()
+            .alpha(alpha)
+            //.clip(shape)
+            //.padding(top = 8.dp)
+            .height(48.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = color,
+            contentColor = MaterialTheme.colorScheme.onPrimaryFixed,
+            disabledContainerColor = color,
+            disabledContentColor = MaterialTheme.colorScheme.onPrimaryFixed
+        ),
+        elevation = ButtonDefaults.buttonElevation(2.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            //horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Text(
+                modifier = Modifier
+                    .weight(1f)
+                    //.fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = choice.text,
+                textAlign = TextAlign.Start,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+            if (myBet != null && myBet.choice_id == choice.choice_id) {
+                Text(
+                    modifier = Modifier
+                        .weight(1f)
+                        //.fillMaxWidth()
+                        .align(Alignment.CenterVertically),
+                    text = "You bet ${myBet.amount}",
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+
+                )
+                if (myBet != null && myBet.choice_id == choice.choice_id) {
+                    Text(
+                        modifier = Modifier
+                            .weight(1f)
+                            //.fillMaxWidth()
+                            .align(Alignment.CenterVertically),
+                        text = "(You bet ${myBet?.amount})",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
+                Text(
+                    modifier = Modifier
+                        .weight(1f)
+                        //.fillMaxWidth()
+                        .align(Alignment.CenterVertically),
+                    text = " ${choice.percentage} %",
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+            Text(
+                modifier = Modifier
+                    .weight(1f)
+                    //.fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = " ${choice.percentage} %",
+                textAlign = TextAlign.End
+            )
+        }
+
+    }
+    Spacer(Modifier.height(8.dp))
+}
+
+/**
+ * Displays a customizable submit button.
+ *
+ * The button's appearance, including its color, text, and active state, is
+ * determined by a [SubmitState] object. The button's text can also be
+ * dynamically updated with a numerical value if provided.
+ *
+ * @param state The [SubmitState] object that defines the button's properties.
+ * @param onClick A lambda function that is invoked when the button is clicked.
+ */
+@Composable
+fun SubmitButton(state: SubmitState, modifier: Modifier, onClick: () -> Unit) {
+    var color = state.color
+    var alpha = 1f
+    if (!state.active) alpha = 0.6f
+    Button(
+        onClick = { onClick() },
+        modifier = modifier
+            .fillMaxWidth()
+            .alpha(alpha)
+            .clip(shape)
+            .padding(top = 16.dp, bottom = 8.dp)
+            .height(48.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = state.color,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = ButtonDefaults.buttonElevation(0.dp),
+    ) {
+        if (state == SubmitState.AdjustStake)
+            Text(
+                modifier = Modifier
+                    //.fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = state.text,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+    }
+}
+
+@Composable
+fun BetCardv2(
+    user_id: String,
+    bet: Bet,
+    onChoiceClick: (BetStake) -> Unit,
+    onBetClose: (String) -> Unit,
+    onWinningChoice: (String) -> Unit
+) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedChoice by remember { mutableStateOf("") }
+    var submitState by remember { mutableStateOf(SubmitState.ByStander) }
+    var showWinners by remember { mutableStateOf(false) }
+    shape = RoundedCornerShape(16.dp)
+
+    LaunchedEffect(bet.isClosed, bet.concludedInfo) {
+        submitState = if (!bet.isClosed && bet.MyBet == null) {
+            SubmitState.SelectChoice
+        } else if (!bet.isClosed && bet.MyBet != null) {
+            SubmitState.AdjustStake
+        } else if (bet.user_id == user_id && bet.choices.none { c -> c.winningChoice }) {
+            SubmitState.SelectWinningChoice
+        } else if (bet.user_id != user_id && bet.choices.none { c -> c.winningChoice }) {
+            SubmitState.Pending
+        } else if (bet.MyBet != null && bet.choices.any { c -> c.winningChoice } && bet.MyBet.choice_id == bet.choices.first { c -> c.winningChoice }.choice_id) {
+            SubmitState.WinMessage
+        } else if (bet.MyBet != null && bet.choices.any { c -> c.winningChoice } && bet.MyBet.choice_id != bet.choices.first { c -> c.winningChoice }.choice_id) {
+            SubmitState.LoseMessage
+        } else {
+            SubmitState.ByStander
+        }
+        Log.i("BetCard | submitState", submitState.name)
+    }
+
+
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-        //.background(MaterialTheme.colorScheme.secondaryContainer)
     ) {
+        //shape = RoundedCornerShape(32.dp)
         if (showDialog) {
             BetDetails(
                 bet,
                 choice = bet.choices.find { c -> c.choice_id == selectedChoice }!!,
-                onDismiss = { showDialog = false },
+                onDismiss = {
+                    showDialog = false
+                    if (!bet.isClosed && bet.MyBet == null) selectedChoice = ""
+                },
                 onConfirmBet = {
                     onChoiceClick(it)
                     showDialog = false
+                    submitState = SubmitState.AdjustStake
                 }
             )
         }
 
-
-        Column(Modifier.padding(16.dp)) {
-            Text(text = bet.name, style = MaterialTheme.typography.titleMedium)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            //Text("Total in Pot: ${bet.potSize}")
-
-            if (!bet.isClosed) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                bet.choices.forEach { selection ->
-                    SelectionButton(
-                        choice_id = selection.choice_id,
-                        text = selection.text,
-                        percentage = selection.percentage,
-                        onChoiceClick = {
-                            showDialog = true
-                            selectedChoice = it
-                        },
-                        isMyBet = (bet.choices.find { s -> s.choice_id == bet.MyBet?.choice_id }?.choice_id
-                            ?: -1) == selection.choice_id
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+            //.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(shape = shape)
+                    .background(betHeader)
+                    .height(48.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    text = bet.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            if (bet.betStakes.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        text = "Bet distribution"
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        modifier = Modifier.padding(end = 16.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        text = "Total Pot: ${bet.potSize}",
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
-                bet.MyBet?.let {
-                    val selectedLabel =
-                        bet.choices.find { s -> s.choice_id == it.choice_id }?.text
-                    Text("Your Bet: ${it.amount} on $selectedLabel")
+                Spacer(Modifier.height(8.dp))
+                ProgressBarContent(bet.choices)
+                Spacer(Modifier.height(8.dp))
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    modifier = Modifier.padding(start = 16.dp),
+                    style = MaterialTheme.typography.labelLarge, text = "Options"
+                )
+                if (bet.MyBet != null) {
+                    val totalExpectedWinningStake =
+                        bet.betStakes.filter { it.choice_id == bet.MyBet.choice_id }
+                            .sumOf { it.amount }
+                    Text(
+                        modifier = Modifier.padding(end = 16.dp),
+                        style = MaterialTheme.typography.labelLarge, text = "Expected Win: ${
+                            bet.MyBet.amount.div(totalExpectedWinningStake).times(bet.potSize)
+                        }"
+                    )
                 }
-            } else {
-                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-                Text("Winners:")
-                bet.concludedInfo?.winners?.forEach {
-                    Text("- ${it.name}: ${it.amount} Coins")
+            Spacer(Modifier.height(8.dp))
+            bet.choices.forEach { choice ->
+
+                ChoiceButton(
+                    choice,
+                    bgColor = bet.choices.indexOf(choice) % 10,
+                    onChoiceClick = { choice_id ->
+                        if (submitState == SubmitState.SelectChoice || submitState == SubmitState.AdjustStake) {
+                            showDialog = true
+                        }
+                        selectedChoice = choice_id
+                        if (submitState == SubmitState.SelectWinningChoice) submitState =
+                            SubmitState.SubmitWinningChoice
+                    },
+                    selectedChoice = selectedChoice,
+                    isBetClosed = bet.isClosed,
+                    myBet = bet.MyBet,
+                    concludedInfo = { bet.concludedInfo != null }
+                )
+            }
+            if (submitState == SubmitState.WinMessage || submitState == SubmitState.LoseMessage) {
+                if (submitState == SubmitState.WinMessage) {
+                    submitState.text = submitState.text.replace(
+                        "x",
+                        bet.concludedInfo?.winners?.first { winner: Winner -> winner.user_id == user_id }?.amount
+                            .toString()
+                    )
+                } else {
+                    submitState.text = submitState.text.replace("x", bet.MyBet?.amount.toString())
                 }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SubmitButton(
+                        state = submitState,
+                        modifier = Modifier.weight(1f),
+                        onClick = { },
+                    )
+                    IconButton(
+                        modifier = Modifier
+                            .padding(top = 16.dp, bottom = 8.dp)
+                            .size(48.dp),
+                        onClick = {
+                            showWinners = !showWinners
+                            Log.i("BetCard | WinnerIcon", "showWinners: $showWinners")
+                        },
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (bet.concludedInfo != null) {
-                    if (bet.concludedInfo.didWin) {
-                        Text("You won ${bet.concludedInfo.myWin}!", color = Color.Green)
-                    } else {
-                        Text("You lost your bet", color = Color.Red)
+                        ) {
+                        Icon(
+                            painter = painterResource(R.drawable.chart_data_48dp_000000_fill0_wght300_grad0_opsz48),
+                            contentDescription = "winners_of_bet_description",
+                            modifier = Modifier.background(if (showWinners) Color.LightGray else Color.Transparent)
+                        )
                     }
                 }
+            } else if (submitState != SubmitState.ByStander) {
+                SubmitButton(
+                    state = submitState,
+                    modifier = Modifier,
+                    onClick = {
+                        if (submitState == SubmitState.SubmitWinningChoice) {
+                            onWinningChoice(selectedChoice)
+                            Log.i("SubmitButton", "SubmitWinningChoice")
+                        }
+                    }
+                )
+            }
+            if (user_id == bet.user_id && !bet.isClosed) {
+//                CloseBet(onClick = {
+//                    onBetClose(bet.bet_id)
+//                    closeState = true
+//                })
+                Button(
+                    onClick = {
+                        onBetClose(bet.bet_id)
+                        selectedChoice = ""
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(shape)
+                        .padding(top = 16.dp, bottom = 8.dp)
+                        .height(48.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SubmitState.CloseBetState.color,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(0.dp),
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterVertically),
+                        text = SubmitState.CloseBetState.text,
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            if (showWinners) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    bet.concludedInfo!!.winners.forEach { winner ->
+                        WinnerDetails(winner)
+                    }
+                }
+
             }
         }
     }
@@ -194,7 +514,7 @@ fun BetCard(bet: Bet, onChoiceClick: (BetStake) -> Unit) {
 
 @Preview
 @Composable
-fun PreviewBetCard() {
+fun PreviewBetCardv2() {
     val stake = BetStake(user_id = "1", bet_id = "1", amount = 100.00, choice_id = "1")
     val sampleBet = Bet(
         user_id = "1",
@@ -202,9 +522,9 @@ fun PreviewBetCard() {
         isClosed = false,
         potSize = 1200.00,
         choices = listOf(
-            Choice("1", "Team A", false, 95.0f),
-            Choice("2", "Team B", false, 1.0f),
-            Choice("3", "Team C", false, 50.0f)
+            Choice("1", "Team A", false, 20.0f),
+            Choice("2", "Team B", false, 15.0f),
+            Choice("3", "Team C", false, 65.0f)
         ),
         MyBet = stake,
         bet_id = "1",
@@ -212,5 +532,10 @@ fun PreviewBetCard() {
         concludedInfo = null
     )
 
-    BetCard(bet = sampleBet, {})
+    BetCardv2(
+        bet = sampleBet,
+        user_id = "1",
+        onChoiceClick = {},
+        onBetClose = {},
+        onWinningChoice = {})
 }

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.betcha.api.Socket
 import com.example.betcha.presentation.components.SnackbarType
+import com.example.betcha.presentation.components.UiEvent
 import com.example.betcha.repository.BetCreationData
 import com.example.betcha.repository.BetRepository
 import com.example.betcha.repository.BetStake
@@ -22,16 +23,19 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 
+sealed interface SnackAction {
+    data class RetryCreateBet(val data: BetCreationData) : SnackAction
+    data class RetryUpdateStake(val data: BetStake) : SnackAction
+    data class RetryCloseBet(val data: String) : SnackAction
+    data class RetrySelectWinningChoice(val data: String) : SnackAction
+}
+
 @HiltViewModel
 class GroupViewModel @Inject constructor(
-    //savedStateHandle: SavedStateHandle,
     val socket: Socket,
     private val betRepository: BetRepository,
     private val sessionManager: SessionManager
-    //private val sessionViewModel: SessionViewModel
-) : ViewModel(),
-    DefaultLifecycleObserver {
-    //private val userId: String = savedStateHandle["userId"] ?: error("Missing userId")
+) : ViewModel(), DefaultLifecycleObserver {
     private val _sessionState = sessionManager.sessionState
     val userState: StateFlow<SessionState>
         get() {
@@ -40,23 +44,7 @@ class GroupViewModel @Inject constructor(
 
     val bets = betRepository.bets
 
-    sealed interface UiEvent {
-        data class ShowSnack(
-            val message: String,
-            val type: SnackbarType = SnackbarType.Info,
-            val actionLabel: String? = null,
-            val action: SnackAction? = null,
-            val duration: SnackbarDuration = SnackbarDuration.Short
-        ) : UiEvent
-    }
-
-    sealed interface SnackAction {
-        data class RetryCreateBet(val data: BetCreationData) : SnackAction
-        data class RetryUpdateStake(val data: BetStake) : SnackAction
-        data class RetryCloseBet(val data: String) : SnackAction
-        data class RetrySelectWinningChoice(val data: String) : SnackAction
-    }
-
+    //region SnackbarEvents
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
 
@@ -66,11 +54,11 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    fun onSuccess(text: String) {
+    private fun onSuccess(text: String) {
         emit(UiEvent.ShowSnack(text, type = SnackbarType.Success))
     }
 
-    fun onBetCreateError(betData: BetCreationData) {
+    private fun onBetCreateError(betData: BetCreationData) {
         emit(
             UiEvent.ShowSnack(
                 message = "Failed to create bet",
@@ -86,7 +74,7 @@ class GroupViewModel @Inject constructor(
         createBet(betData)
     }
 
-    fun onSetStakeError(stakeData: BetStake) {
+    private fun onSetStakeError(stakeData: BetStake) {
         emit(
             UiEvent.ShowSnack(
                 message = "Failed to update stake",
@@ -102,7 +90,7 @@ class GroupViewModel @Inject constructor(
         updateStake(stakeData)
     }
 
-    fun onCloseBetError(betId: String) {
+    private fun onCloseBetError(betId: String) {
         emit(
             UiEvent.ShowSnack(
                 message = "Failed to close bet",
@@ -118,7 +106,7 @@ class GroupViewModel @Inject constructor(
         closeBet(betId)
     }
 
-    fun onSelectWinningChoiceError(betId: String) {
+    private fun onSelectWinningChoiceError(betId: String) {
         emit(
             UiEvent.ShowSnack(
                 message = "Failed to submit the selected winning choice",
@@ -133,33 +121,7 @@ class GroupViewModel @Inject constructor(
     fun retrySelectWinningChoice(choiceId: String) {
         selectWinningChoice(choiceId)
     }
-
-//    init {
-//        //getUserData(userId)
-//        betRepository.subscribeToBetUpdates { updated ->
-//            _bets.value = updated
-//
-//        }
-//    }
-
-
-//    fun getUserData(userId: String) {
-//        // TODO add snackbar to error messages
-//        viewModelScope.launch {
-//            try {
-//                val response = RetrofitClient.apiService.getUser(userId)
-//                if (response.isSuccessful) {
-//                    response.body()?.let { _userState.value.fromApiUser(it) }
-//                } else {
-//                    val errorMsg = response.errorBody()?.string()
-//                    Log.i("api error: ", "HTTP ${response.code()}: $errorMsg")
-//                }
-//            } catch (e: Exception) {
-//                Log.i("api error: ", "Network error: ${e.localizedMessage}")
-//            }
-//        }
-//
-//    }
+    //endregion SnackbarEvents
 
     fun joinGroupSocket(userId: String, groupPin: String) {
         socket.connect()
@@ -175,7 +137,6 @@ class GroupViewModel @Inject constructor(
     }
 
     fun createBet(betData: BetCreationData) {
-        //betData.group_pin = _sessionState.value.groupPin
         viewModelScope.launch {
             betData.user_id = _sessionState.value.userId
             betRepository.sendNewBet(betData) { response ->
@@ -186,15 +147,6 @@ class GroupViewModel @Inject constructor(
                 }
             }
         }
-//        val json = Json.encodeToString(betData)
-//        Log.i("bet repo", json)
-//        socket.emit(
-//            "requestCreateBet",
-//            json,
-//            callback = { response ->
-//                Log.i("bet creation", response.toString())
-//            }
-//        )
     }
 
     fun updateStake(betStake: BetStake) {

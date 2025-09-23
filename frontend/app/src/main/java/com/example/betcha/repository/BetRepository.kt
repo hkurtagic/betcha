@@ -18,7 +18,6 @@ interface BetRepository {
     val users: StateFlow<List<User>>
     val bets: StateFlow<List<Bet>>
 
-    //fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit)
     fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit))
     fun sendStake(stake: BetStake, callback: ((JSONObject) -> Unit))
     fun closeBet(closeBet: CloseBet, callback: ((JSONObject) -> Unit))
@@ -141,12 +140,6 @@ data class BetStake(
     val amount: Double
 )
 
-//@Serializable
-//data class MyStake(
-//    val choice_id: String,
-//    val amount: Double
-//)
-
 @Serializable
 data class ConcludedInfo(
     val didWin: Boolean, // true if current user won
@@ -198,10 +191,6 @@ class BetRepositoryImpl @Inject constructor(
             return _bets.asStateFlow()
         }
 
-//    override fun subscribeToBetUpdates(onUpdate: (List<Bet>) -> Unit) {
-//        eventRegistry.onBetUpdate = onUpdate
-//    }
-
     init {
         socket.on("UserUpdate") { args ->
             val usersInGroup: List<User> = Json.decodeFromString((args as Array<*>)[0] as String)
@@ -216,75 +205,30 @@ class BetRepositoryImpl @Inject constructor(
         }
         socket.on("BetUpdate") { args ->
             val incomingBets: List<BetDTO> = Json.decodeFromString((args as Array<*>)[0] as String)
-            //Json.decodeFromString(((args as Array<*>)[0] as JSONArray).toString())
-            //Log.i("BetUpdate0", (args as Array<*>)[0].toString())
-            //Log.i("BetUpdate1", Json.encodeToString<Array<BetDTO>>(args))
-//            val b = incoming_bets.map { b ->
-//                b.mapToBetObject(
-//                    sessionManager.sessionState.value.userId
-//                )
-//            }
-            //_bets.update { it.toMutableList().apply { it + b } }
-//            val copied = b.map { it.copy() }
-//            _bets.update { it + copied }
             val copied = incomingBets.map {
                 it.mapToBetObject(sessionManager.sessionState.value.userId, _users.value).copy()
             }
             _bets.value = copied
-            Log.d("Repo | Recomposition", "Updated with ${copied.size} bets")
-//            _bets.update { current ->
-//                current + copied
-//            }
-            //_bets.value = _bets.value.toMutableList().apply { addAll(b) }
-//            _bets.update { current ->
-//                current + incoming_bets.map { b ->
-//                    b.mapToBetObject(sessionManager.sessionState.value.userId)
-//                }
-//            }
-            //_bets = (_bets + b).toMutableList()
-//                (Json.decodeFromString<List<BetDTO>>(args)).map { b ->
-//                b.mapToBetObject(
-//                    sessionManager.sessionState.value.userId
-//                )
-//            }
-            Log.i("Repo | BetUpdate", "${bets.value}")
+            Log.i("Repo | BetUpdate", "Updated with ${copied.size} bets")
         }
     }
 
     override fun sendNewBet(bet: BetCreationData, callback: ((JSONObject) -> Unit)) {
         val json = Json.encodeToString(bet)
         Log.i("send bet", json)
-        socket.emit(
-            "requestCreateBet",
-            json,
-            callback = callback /*{ response ->
-                Log.i("bet creation", response.toString())
-
-            }*/
-        )
+        socket.emit("requestCreateBet", json, callback = callback)
     }
 
     override fun sendStake(stake: BetStake, callback: ((JSONObject) -> Unit)) {
         val json = Json.encodeToString(stake)
-        Log.i("send stake", json)
-        socket.emit(
-            "requestCreateBetStake",
-            json,
-            callback = callback
-            /*{ response ->
-                Log.i("BetRepo | bet stake creation", response.toString())
-            }*/
-        )
+        Log.i("Repo | sendStake", json)
+        socket.emit("requestCreateBetStake", json, callback = callback)
     }
 
     override fun closeBet(closeBet: CloseBet, callback: ((JSONObject) -> Unit)) {
         val json = Json.encodeToString(closeBet)
         Log.i("Repo | closeBet", json)
-        socket.emit(
-            "requestCloseBet",
-            json,
-            callback = callback
-        )
+        socket.emit("requestCloseBet", json, callback = callback)
     }
 
     override fun selectWinningChoice(
@@ -293,11 +237,7 @@ class BetRepositoryImpl @Inject constructor(
     ) {
         val json = Json.encodeToString(winningChoice)
         Log.i("Repo | selectWinningChoice", json)
-        socket.emit(
-            "requestSelectWinningChoice",
-            json,
-            callback = callback
-        )
+        socket.emit("requestSelectWinningChoice", json, callback = callback)
     }
 
 }

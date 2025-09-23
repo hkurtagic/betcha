@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-//
 data class SessionState(
     var userId: String = "",
     var userName: String = "",
@@ -13,7 +12,7 @@ data class SessionState(
     var token: String? = null
 )
 
-@Singleton //@ActivityRetainedScoped
+@Singleton
 class SessionManager @Inject constructor() {
     val sessionState = MutableStateFlow<SessionState>(SessionState())
 

@@ -128,7 +128,7 @@ fun BetDetails(
                     )
                 }
             }) {
-                Text("Create")
+                Text("Submit")
             }
         },
         dismissButton = {

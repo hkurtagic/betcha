@@ -30,37 +30,21 @@ class Socket(
     endpoint: String,
     config: SocketOptions?
 ) {
-    private val socketIo: Socket
-
-    init {
-        socketIo = IO.socket(endpoint, IO.Options().apply {
-            transports = config?.transport?.let {
-                when (it) {
-                    SocketOptions.Transport.DEFAULT -> return@let null
-                    SocketOptions.Transport.WEBSOCKET -> return@let arrayOf(WebSocket.NAME)
-                    SocketOptions.Transport.POLLING -> return@let arrayOf(Polling.NAME)
-                }
+    private val socketIo: Socket = IO.socket(endpoint, IO.Options().apply {
+        transports = config?.transport?.let {
+            when (it) {
+                SocketOptions.Transport.DEFAULT -> return@let null
+                SocketOptions.Transport.WEBSOCKET -> return@let arrayOf(WebSocket.NAME)
+                SocketOptions.Transport.POLLING -> return@let arrayOf(Polling.NAME)
             }
-            query = config?.queryParams?.run {
-                if (size == 0) return@run null
-
-                val params: List<String> = map { (key, value) -> "$key=$value" }
-                params.joinToString("&")
-            }
-        })
-
-        socketIo.on("responseJoinGroup") { data ->
-            Log.i("SocketIO | responseJoinGroup", data.toString())
         }
-//        socketIo.on("bet_update") { (args) ->
-//            try {
-//                val bets = Json.decodeFromString<List<Bet>>(args.toString())
-//                SocketEventRegistry().onBetUpdate?.invoke(bets)
-//            } catch (e: Exception) {
-//                Log.e("bet_update", "Failed to parse bet_update", e)
-//            }
-//        }
-    }
+        query = config?.queryParams?.run {
+            if (isEmpty()) return@run null
+
+            val params: List<String> = map { (key, value) -> "$key=$value" }
+            params.joinToString("&")
+        }
+    })
 
     fun emit(event: String, data: String, callback: ((JSONObject) -> Unit)? = null) {
         if (callback != null) {
@@ -90,7 +74,7 @@ class Socket(
         if (callback != null) {
             socketIo.emit(event, JSONArray(data.toString()), Ack {
                 val ackData = it[0]
-                Log.i("SocketIO | emit JSONArray",  ackData.toString())
+                Log.i("SocketIO | emit JSONArray", ackData.toString())
                 callback(ackData as JSONObject)
             })
         } else {
