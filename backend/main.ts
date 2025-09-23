@@ -241,7 +241,12 @@ async function main() {
         console.log(err.message) // the error message, for example "Session ID unknown"
         console.log(err.context) // some additional error context
     })
-
+    io.of('/').adapter.on('delete-room', async (room) => {
+        if (await dbController.getGroupByPIN(room)) {
+            console.log('room-delete | ' + room)
+            dbController.deleteGroupByPIN(room)
+        }
+    })
     io.on('connection', (socket) => {
         // socket.onAnyOutgoing((event, ...args) => {
         //     customLog(

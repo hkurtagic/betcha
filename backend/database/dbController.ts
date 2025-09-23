@@ -20,6 +20,14 @@ class DatabaseController {
             },
         })
     }
+
+    public async deleteGroupByPIN(group_pin: string): Promise<Group> {
+        return await prisma.group.delete({
+            where: {
+                pin: group_pin,
+            },
+        })
+    }
     /*
     public async setGroupAsInactive(group_pin: string): Promise<Error | void> {
         return new Promise((resolve, reject) => {

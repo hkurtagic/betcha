@@ -21,7 +21,7 @@ model User {
   user_id   String      @id @default(uuid())
   name      String      @unique
   groupPin  String
-  group     Group?      @relation(fields: [groupPin], references: [pin])
+  group     Group?      @relation(fields: [groupPin], references: [pin], onDelete: Cascade)
   UserToken UserToken[]
   Bet       Bet[]
   BetStake  BetStake[]
@@ -29,7 +29,7 @@ model User {
 
 model UserToken {
   user_id String @id
-  User    User   @relation(fields: [user_id], references: [user_id])
+  User    User   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   token   String @unique
 }
 
@@ -37,7 +37,7 @@ model Bet {
   bet_id   String     @id @default(uuid())
   name     String
   isClosed Boolean
-  openedBy User       @relation(fields: [user_id], references: [user_id])
+  openedBy User       @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   choices  Choice[]
   user_id  String
   BetStake BetStake[]
@@ -48,7 +48,7 @@ model Choice {
   text          String
   winningChoice Boolean    @default(false)
   bet_id        String
-  Bet           Bet?       @relation(fields: [bet_id], references: [bet_id])
+  Bet           Bet?       @relation(fields: [bet_id], references: [bet_id], onDelete: Cascade)
   BetStake      BetStake[]
 }
 
@@ -57,9 +57,9 @@ model BetStake {
   choice_id String
   bet_id    String
   amount    Int
-  User      User   @relation(fields: [user_id], references: [user_id])
-  Bet       Bet    @relation(fields: [bet_id], references: [bet_id])
-  Choice    Choice @relation(fields: [choice_id], references: [choice_id])
+  User      User   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  Bet       Bet    @relation(fields: [bet_id], references: [bet_id], onDelete: Cascade)
+  Choice    Choice @relation(fields: [choice_id], references: [choice_id], onDelete: Cascade)
 
   @@id([user_id, bet_id])
 }
