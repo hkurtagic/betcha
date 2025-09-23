@@ -131,82 +131,77 @@ fun ProgressBarContent(elements: List<Choice>) {
  * @param onChoiceClick A lambda function that is invoked with the ID of the clicked choice.
  */
 @Composable
-fun ChoiceButtons(
-    elements: List<Choice>,
+fun ChoiceButton(
+    choice: Choice,
+    bgColor: Int,
     isBetClosed: Boolean,
     selectedChoice: String,
     myBet: BetStake?,
     concludedInfo: () -> Boolean,
     onChoiceClick: (String) -> Unit
 ) {
-    elements.forEach { choice ->
-        val isDone = concludedInfo()
-        val bgColor = elements.indexOf(choice) % 10
-        var color = colorList[bgColor]
-        val container = if (myBet?.choice_id == selectedChoice)
-            MaterialTheme.colorScheme.onSecondaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceVariant
-        var alpha = 1f
-        var enabled = false
-        if (selectedChoice != choice.choice_id && !(isBetClosed && isDone)) alpha = 0.6f
-        if (selectedChoice == "" || selectedChoice == choice.choice_id || (isBetClosed && !isDone)) enabled =
-            true
+    val isDone = concludedInfo()
+    val color = colorList[bgColor]
+    var alpha = 1f
+    var enabled = false
+    if (selectedChoice != choice.choice_id && !(isBetClosed && isDone)) alpha = 0.6f
+    if (selectedChoice == "" || selectedChoice == choice.choice_id || (isBetClosed && !isDone)) enabled =
+        true
 
-        Button(
-            onClick = { onChoiceClick(choice.choice_id) },
-            modifier = Modifier
-                //.fillMaxWidth()
-                .alpha(alpha)
-                //.clip(shape)
-                //.padding(top = 8.dp)
-                .height(48.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            enabled = enabled,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = color,
-                contentColor = MaterialTheme.colorScheme.onPrimaryFixed,
-                disabledContainerColor = color,
-                disabledContentColor = MaterialTheme.colorScheme.onPrimaryFixed
-            ),
-            elevation = ButtonDefaults.buttonElevation(2.dp),
+    Button(
+        onClick = { onChoiceClick(choice.choice_id) },
+        modifier = Modifier
+            //.fillMaxWidth()
+            .alpha(alpha)
+            //.clip(shape)
+            //.padding(top = 8.dp)
+            .height(48.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = color,
+            contentColor = MaterialTheme.colorScheme.onPrimaryFixed,
+            disabledContainerColor = color,
+            disabledContentColor = MaterialTheme.colorScheme.onPrimaryFixed
+        ),
+        elevation = ButtonDefaults.buttonElevation(2.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            //horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                //horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
+            Text(
+                modifier = Modifier
+                    .weight(1f)
+                    //.fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = choice.text,
+                textAlign = TextAlign.Start,
+            )
+            if (myBet != null && myBet.choice_id == choice.choice_id) {
                 Text(
                     modifier = Modifier
                         .weight(1f)
                         //.fillMaxWidth()
                         .align(Alignment.CenterVertically),
-                    text = choice.text,
-                    textAlign = TextAlign.Start,
-
-                    )
-                if (myBet != null && myBet.choice_id == choice.choice_id) {
-                    Text(
-                        modifier = Modifier
-                            .weight(1f)
-                            //.fillMaxWidth()
-                            .align(Alignment.CenterVertically),
-                        text = "(You bet ${myBet?.amount})",
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Text(
-                    modifier = Modifier
-                        .weight(1f)
-                        //.fillMaxWidth()
-                        .align(Alignment.CenterVertically),
-                    text = " ${choice.percentage} %",
-                    textAlign = TextAlign.End
+                    text = "You bet ${myBet.amount}",
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-
+            Text(
+                modifier = Modifier
+                    .weight(1f)
+                    //.fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = " ${choice.percentage} %",
+                textAlign = TextAlign.End
+            )
         }
-        Spacer(Modifier.height(8.dp))
+
     }
+    Spacer(Modifier.height(8.dp))
 }
 
 /**
@@ -239,16 +234,15 @@ fun SubmitButton(state: SubmitState, modifier: Modifier, onClick: () -> Unit) {
         ),
         elevation = ButtonDefaults.buttonElevation(0.dp),
     ) {
-        var text = state.text
-        //if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
-        Text(
-            modifier = Modifier
-                //.fillMaxWidth()
-                .align(Alignment.CenterVertically),
-            text = text,
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center
-        )
+        if (state == SubmitState.AdjustStake)
+            Text(
+                modifier = Modifier
+                    //.fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                text = state.text,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
     }
 }
 
@@ -377,7 +371,7 @@ fun BetCardv2(
                     Text(
                         modifier = Modifier.padding(end = 16.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        text = "Total Pot: 200000000000000000000000000",
+                        text = "Total Pot: ${bet.potSize}",
                         textAlign = TextAlign.End,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -388,26 +382,47 @@ fun BetCardv2(
                 ProgressBarContent(bet.choices)
                 Spacer(Modifier.height(8.dp))
             }
-            Text(
-                modifier = Modifier.padding(start = 16.dp),
-                style = MaterialTheme.typography.titleMedium, text = "Options"
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    modifier = Modifier.padding(start = 16.dp),
+                    style = MaterialTheme.typography.labelLarge, text = "Options"
+                )
+                if (bet.MyBet != null) {
+                    val totalExpectedWinningStake =
+                        bet.betStakes.filter { it.choice_id == bet.MyBet.choice_id }
+                            .sumOf { it.amount }
+                    Text(
+                        modifier = Modifier.padding(end = 16.dp),
+                        style = MaterialTheme.typography.labelLarge, text = "Expected Win: ${
+                            bet.MyBet.amount.div(totalExpectedWinningStake).times(bet.potSize)
+                        }"
+                    )
+                }
+            }
+
             Spacer(Modifier.height(8.dp))
-            ChoiceButtons(
-                bet.choices,
-                onChoiceClick = { choice_id ->
-                    if (submitState == SubmitState.SelectChoice || submitState == SubmitState.AdjustStake) {
-                        showDialog = true
-                    }
-                    selectedChoice = choice_id
-                    if (submitState == SubmitState.SelectWinningChoice) submitState =
-                        SubmitState.SubmitWinningChoice
-                },
-                selectedChoice = selectedChoice,
-                isBetClosed = bet.isClosed,
-                myBet = bet.MyBet,
-                concludedInfo = { bet.concludedInfo != null }
-            )
+            bet.choices.forEach { choice ->
+
+                ChoiceButton(
+                    choice,
+                    bgColor = bet.choices.indexOf(choice) % 10,
+                    onChoiceClick = { choice_id ->
+                        if (submitState == SubmitState.SelectChoice || submitState == SubmitState.AdjustStake) {
+                            showDialog = true
+                        }
+                        selectedChoice = choice_id
+                        if (submitState == SubmitState.SelectWinningChoice) submitState =
+                            SubmitState.SubmitWinningChoice
+                    },
+                    selectedChoice = selectedChoice,
+                    isBetClosed = bet.isClosed,
+                    myBet = bet.MyBet,
+                    concludedInfo = { bet.concludedInfo != null }
+                )
+            }
             if (submitState == SubmitState.WinMessage || submitState == SubmitState.LoseMessage) {
                 if (submitState == SubmitState.WinMessage) {
                     submitState.text = submitState.text.replace(
