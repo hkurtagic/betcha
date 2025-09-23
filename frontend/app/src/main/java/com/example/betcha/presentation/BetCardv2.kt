@@ -124,18 +124,26 @@ fun ProgressBarContent(elements: List<Choice>) {
  * @param onChoiceClick A lambda function that is invoked with the ID of the clicked choice.
  */
 @Composable
-fun ChoiceButtons(elements: List<Choice>, selectedChoice: String, onChoiceClick: (String) -> Unit) {
+fun ChoiceButtons(
+    elements: List<Choice>,
+    isBetClosed: Boolean,
+    selectedChoice: String,
+    concludedInfo: () -> Boolean,
+    onChoiceClick: (String) -> Unit
+) {
     Text(
         modifier = Modifier.padding(start = 16.dp, top = 8.dp),
         style = MaterialTheme.typography.titleMedium, text = "Options"
     )
     elements.forEach { choice ->
+        val isDone = concludedInfo()
         val bgColor = elements.indexOf(choice) % 10
         var color = colorList[bgColor]
         var alpha = 1f
         var enabled = false
-        if (selectedChoice != choice.choice_id) alpha = 0.6f
-        if (selectedChoice == "" || selectedChoice == choice.choice_id) enabled = true
+        if (selectedChoice != choice.choice_id && !(isBetClosed && isDone)) alpha = 0.6f
+        if (selectedChoice == "" || selectedChoice == choice.choice_id || (isBetClosed && !isDone)) enabled =
+            true
         Button(
             onClick = { onChoiceClick(choice.choice_id) },
             modifier = Modifier
@@ -285,7 +293,10 @@ fun BetCardv2(
             BetDetails(
                 bet,
                 choice = bet.choices.find { c -> c.choice_id == selectedChoice }!!,
-                onDismiss = { showDialog = false },
+                onDismiss = {
+                    showDialog = false
+                    if (!bet.isClosed && bet.MyBet == null) selectedChoice = ""
+                },
                 onConfirmBet = {
                     onChoiceClick(it)
                     showDialog = false
@@ -326,7 +337,9 @@ fun BetCardv2(
                     if (submitState == SubmitState.SelectWinningChoice) submitState =
                         SubmitState.SubmitWinningChoice
                 },
-                selectedChoice = selectedChoice
+                selectedChoice = selectedChoice,
+                isBetClosed = bet.isClosed,
+                concludedInfo = { bet.concludedInfo != null }
             )
             if (submitState != SubmitState.ByStander) {
                 SubmitButton(
@@ -381,6 +394,7 @@ fun BetCardv2(
                 Button(
                     onClick = {
                         onBetClose(bet.bet_id)
+                        selectedChoice = ""
                     },
                     modifier = Modifier
                         .fillMaxWidth()
