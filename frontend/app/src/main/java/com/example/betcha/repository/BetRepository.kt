@@ -43,7 +43,7 @@ data class BetDTO(
     val BetStake: List<BetStake> = emptyList(),
     //val concludedInfo: ConcludedInfo? = null
 ) {
-    fun mapToBetObject(myUserId: String): Bet {
+    fun mapToBetObject(myUserId: String, usersInGroup: List<User>?): Bet {
         val myBetStake = (BetStake.filter { b -> b.user_id == myUserId }).getOrNull(0)
         val potSize = (BetStake.sumOf { b -> b.amount })
         val mappedChoices = choices.map { c -> c.mapToChoiceObject(potSize, BetStake) }
@@ -58,6 +58,7 @@ data class BetDTO(
                 (BetStake.filter { bs -> bs.choice_id == winChoice.choice_id }).map { bs ->
                     Winner(
                         bs.user_id,
+                        name = usersInGroup?.first { it.user_id == bs.user_id }?.name ?: "",
                         amount = bs.amount
                     )
                 }
@@ -227,7 +228,7 @@ class BetRepositoryImpl @Inject constructor(
 //            val copied = b.map { it.copy() }
 //            _bets.update { it + copied }
             val copied = incomingBets.map {
-                it.mapToBetObject(sessionManager.sessionState.value.userId).copy()
+                it.mapToBetObject(sessionManager.sessionState.value.userId, _users.value).copy()
             }
             _bets.value = copied
             Log.d("Repo | Recomposition", "Updated with ${copied.size} bets")

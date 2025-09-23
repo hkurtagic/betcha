@@ -2,19 +2,24 @@ package com.example.betcha.presentation
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,9 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.betcha.R
+import com.example.betcha.presentation.components.WinnerDetails
 import com.example.betcha.repository.Bet
 import com.example.betcha.repository.BetStake
 import com.example.betcha.repository.Choice
@@ -58,7 +66,7 @@ val colorList = listOf(
 )
 
 enum class SubmitState(
-    val text: String,
+    var text: String,
     val active: Boolean,
     val color: Color,
     var amount: Int? = null
@@ -184,13 +192,13 @@ fun ChoiceButtons(
  * @param onClick A lambda function that is invoked when the button is clicked.
  */
 @Composable
-fun SubmitButton(state: SubmitState, onClick: () -> Unit) {
+fun SubmitButton(state: SubmitState, modifier: Modifier, onClick: () -> Unit) {
     var color = state.color
     var alpha = 1f
     if (!state.active) alpha = 0.6f
     Button(
         onClick = { onClick() },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .alpha(alpha)
             .clip(shape)
@@ -207,7 +215,7 @@ fun SubmitButton(state: SubmitState, onClick: () -> Unit) {
         //if (state.amount != null) text = text.replace("x", state.amount.toString(), false)
         Text(
             modifier = Modifier
-                .fillMaxWidth()
+                //.fillMaxWidth()
                 .align(Alignment.CenterVertically),
             text = text,
             style = MaterialTheme.typography.titleMedium,
@@ -258,11 +266,10 @@ fun BetCardv2(
     var showDialog by remember { mutableStateOf(false) }
     var selectedChoice by remember { mutableStateOf("") }
     var submitState by remember { mutableStateOf(SubmitState.ByStander) }
-    //var closeState by remember { mutableStateOf(bet.isClosed) }
+    var showWinners by remember { mutableStateOf(false) }
     shape = RoundedCornerShape(16.dp)
 
     LaunchedEffect(bet.isClosed, bet.concludedInfo) {
-        Log.i("BetCard | submitState", submitState.name)
         submitState = if (!bet.isClosed && bet.MyBet == null) {
             SubmitState.SelectChoice
         } else if (!bet.isClosed && bet.MyBet != null) {
@@ -278,6 +285,7 @@ fun BetCardv2(
         } else {
             SubmitState.ByStander
         }
+        Log.i("BetCard | submitState", submitState.name)
     }
 
 
@@ -341,9 +349,36 @@ fun BetCardv2(
                 isBetClosed = bet.isClosed,
                 concludedInfo = { bet.concludedInfo != null }
             )
-            if (submitState != SubmitState.ByStander) {
+            if (submitState == SubmitState.WinMessage || submitState == SubmitState.LoseMessage) {
+                submitState.text = submitState.text.replace("x", bet.MyBet?.amount.toString())
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SubmitButton(
+                        state = submitState,
+                        modifier = Modifier.weight(1f),
+                        onClick = { },
+                    )
+                    IconButton(
+                        modifier = Modifier
+                            .padding(top = 16.dp, bottom = 8.dp)
+                            .size(48.dp),
+                        onClick = {
+                            showWinners = !showWinners
+                            Log.i("BetCard | WinnerIcon", "showWinners: $showWinners")
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.chart_data_48dp_000000_fill0_wght300_grad0_opsz48),
+                            contentDescription = "winners_of_bet_description"
+                        )
+                    }
+                }
+            } else if (submitState != SubmitState.ByStander) {
                 SubmitButton(
                     state = submitState,
+                    modifier = Modifier,
                     onClick = {
                         when (submitState) {
                             SubmitState.SelectChoice -> {
@@ -417,6 +452,17 @@ fun BetCardv2(
                         textAlign = TextAlign.Center
                     )
                 }
+            }
+            if (showWinners) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    bet.concludedInfo!!.winners.forEach { winner ->
+                        WinnerDetails(winner)
+                    }
+                }
+
             }
         }
     }
