@@ -1,12 +1,12 @@
 package com.example.betcha.presentation
 
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.betcha.R
@@ -94,13 +95,9 @@ enum class SubmitState(
  */
 @Composable
 fun ProgressBarContent(elements: List<Choice>) {
-    Text(
-        modifier = Modifier.padding(start = 16.dp, top = 8.dp),
-        style = MaterialTheme.typography.titleMedium, text = "Bet destibution"
-    )
     Row(
         modifier = Modifier
-            .padding(top = 8.dp)
+            //.padding(top = 8.dp)
             .height(48.dp)
             .clip(shape),
         verticalAlignment = Alignment.CenterVertically
@@ -142,14 +139,14 @@ fun ChoiceButtons(
     concludedInfo: () -> Boolean,
     onChoiceClick: (String) -> Unit
 ) {
-    Text(
-        modifier = Modifier.padding(start = 16.dp, top = 8.dp),
-        style = MaterialTheme.typography.titleMedium, text = "Options"
-    )
     elements.forEach { choice ->
         val isDone = concludedInfo()
         val bgColor = elements.indexOf(choice) % 10
         var color = colorList[bgColor]
+        val container = if (myBet?.choice_id == selectedChoice)
+            MaterialTheme.colorScheme.onSecondaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceVariant
         var alpha = 1f
         var enabled = false
         if (selectedChoice != choice.choice_id && !(isBetClosed && isDone)) alpha = 0.6f
@@ -161,22 +158,17 @@ fun ChoiceButtons(
                 .fillMaxWidth()
                 .alpha(alpha)
                 //.clip(shape)
-                .padding(top = 8.dp)
+                //.padding(top = 8.dp)
                 .height(48.dp),
             contentPadding = PaddingValues(horizontal = 16.dp),
             enabled = enabled,
             colors = ButtonDefaults.buttonColors(
-                containerColor = colorList[bgColor],
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = colorList[bgColor],
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = color,
+                contentColor = MaterialTheme.colorScheme.onPrimaryFixed,
+                disabledContainerColor = color,
+                disabledContentColor = MaterialTheme.colorScheme.onPrimaryFixed
             ),
             elevation = ButtonDefaults.buttonElevation(2.dp),
-            border =
-            if (choice.choice_id == myBet?.choice_id) BorderStroke(
-                2.dp,
-                MaterialTheme.colorScheme.primary
-            ) else BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
         ) {
             Text(
                 modifier = Modifier
@@ -186,6 +178,7 @@ fun ChoiceButtons(
                 textAlign = TextAlign.Start
             )
         }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -298,13 +291,11 @@ fun BetCardv2(
 
 
     Card(
-        shape = shape,
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
     ) {
-        shape = RoundedCornerShape(32.dp)
+        //shape = RoundedCornerShape(32.dp)
         if (showDialog) {
             BetDetails(
                 bet,
@@ -324,7 +315,7 @@ fun BetCardv2(
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth()
+            //.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
@@ -335,15 +326,31 @@ fun BetCardv2(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
                     text = bet.name,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+            Spacer(Modifier.height(12.dp))
             if (bet.betStakes.isNotEmpty()) {
+                Text(
+                    modifier = Modifier.padding(start = 16.dp),
+                    style = MaterialTheme.typography.labelLarge, text = "Bet distribution"
+                )
+                Spacer(Modifier.height(8.dp))
                 ProgressBarContent(bet.choices)
+                Spacer(Modifier.height(8.dp))
             }
+            Text(
+                modifier = Modifier.padding(start = 16.dp),
+                style = MaterialTheme.typography.titleMedium, text = "Options"
+            )
+            Spacer(Modifier.height(8.dp))
             ChoiceButtons(
                 bet.choices,
                 onChoiceClick = { choice_id ->
@@ -398,43 +405,9 @@ fun BetCardv2(
                     state = submitState,
                     modifier = Modifier,
                     onClick = {
-                        when (submitState) {
-                            SubmitState.SelectChoice -> {
-                                if (selectedChoice != "") {
-                                    Log.i("SubmitButton", "SelectChoice")
-                                }
-                            }
-
-                            SubmitState.Pending -> {
-                                Log.i("SubmitButton", "Pending")
-                            }
-
-                            SubmitState.CloseBetState -> {
-                                Log.i("SubmitButton", "CloseBet")
-                            }
-
-                            SubmitState.SelectWinningChoice -> {
-                                Log.i("SubmitButton", "SelectWinningChoice")
-                            }
-
-                            SubmitState.SubmitWinningChoice -> {
-                                onWinningChoice(selectedChoice)
-                                Log.i("SubmitButton", "SubmitWinningChoice")
-                            }
-
-                            SubmitState.LoseMessage -> {
-                                Log.i("SubmitButton", "LoseMessage")
-                            }
-
-                            SubmitState.WinMessage -> {
-                                Log.i("SubmitButton", "WinMessage")
-                            }
-
-                            SubmitState.AdjustStake -> {
-                                Log.i("SubmitButton", "AdjustStake")
-                            }
-
-                            SubmitState.ByStander -> {}
+                        if (submitState == SubmitState.SubmitWinningChoice) {
+                            onWinningChoice(selectedChoice)
+                            Log.i("SubmitButton", "SubmitWinningChoice")
                         }
                     }
                 )
