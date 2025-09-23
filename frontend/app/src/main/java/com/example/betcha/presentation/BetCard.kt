@@ -188,7 +188,7 @@ fun ChoiceButton(
                         .weight(1f)
                         //.fillMaxWidth()
                         .align(Alignment.CenterVertically),
-                    text = "You bet ${myBet.amount}",
+                    text = "You bet ${myBet.amount.toInt()}",
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -349,7 +349,7 @@ fun BetCardv2(
                     Text(
                         modifier = Modifier.padding(end = 16.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        text = "Total Pot: ${bet.potSize}",
+                        text = "Total Pot: ${bet.potSize.toInt()}",
                         textAlign = TextAlign.End,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -376,6 +376,7 @@ fun BetCardv2(
                         modifier = Modifier.padding(end = 16.dp),
                         style = MaterialTheme.typography.labelLarge, text = "Expected Win: ${
                             bet.MyBet.amount.div(totalExpectedWinningStake).times(bet.potSize)
+                                .toInt()
                         }"
                     )
                 }
