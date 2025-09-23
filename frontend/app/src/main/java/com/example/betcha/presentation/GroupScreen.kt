@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarResult
@@ -24,6 +26,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.betcha.R
 import com.example.betcha.model.GroupViewModel
 import com.example.betcha.model.SnackAction
 import com.example.betcha.presentation.components.AppSnackbarHost
@@ -50,6 +56,9 @@ fun GroupScreen(
     val (snackbarHostState, snackbarManager) = rememberAppSnackbarState()
     val userState by groupViewModel.userState.collectAsState()
     val betState by groupViewModel.bets.collectAsState()
+    val clipboard = LocalClipboard.current
+
+
     LaunchedEffect(userState.groupPin) {
         if (userState.groupPin != "" && !groupViewModel.socket.isConnected()) {
             groupViewModel.joinGroupSocket(userState.userId, userState.groupPin)
@@ -106,11 +115,25 @@ fun GroupScreen(
                     .shadow(elevation = 4.dp),
                 title = {
                     Text(
-                        "RoomID: ${userState.groupPin}",
+                        "Group: ${userState.groupPin}",
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.MiddleEllipsis
                     )
                 },
+                actions = {
+                    IconButton(onClick = {
+                        groupViewModel.copyGroupId(
+                            clipboard,
+                            userState.groupPin
+                        )
+                    }) {
+                        Icon(
+                            painter = painterResource(R.drawable.content_copy_24dp_000000_fill0_wght300_grad0_opsz24),
+                            contentDescription = stringResource(id = R.string.copy_group_pin_description),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+                }
                 //TODO: add functional back button by handling rejoin manually?
                 /*
                 navigationIcon = {

@@ -1,7 +1,10 @@
 package com.example.betcha.model
 
+import android.content.ClipData
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,6 +46,14 @@ class GroupViewModel @Inject constructor(
         }
 
     val bets = betRepository.bets
+
+    fun copyGroupId(clipboard: Clipboard, groupPin: String) {
+        viewModelScope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("groupPIN", groupPin)))
+            onSuccess("Group PIN copied")
+        }
+    }
+
 
     //region SnackbarEvents
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)

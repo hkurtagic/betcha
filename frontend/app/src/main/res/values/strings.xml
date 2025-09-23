@@ -8,5 +8,6 @@
     <string name="addaction">AddAction</string>
     <string name="backAction_description">Back to Home</string>
     <string name="menu_description">Menu</string>
+    <string name="copy_group_pin_description">Copy Group ID</string>
     <string name="winners_of_bet_description">Show all Winners of the Bet</string>
 </resources>
