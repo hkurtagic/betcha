@@ -182,6 +182,8 @@ fun ChoiceButtons(
                         .align(Alignment.CenterVertically),
                     text = choice.text,
                     textAlign = TextAlign.Start,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
 
                     )
                 if (myBet != null && myBet.choice_id == choice.choice_id) {
@@ -191,7 +193,9 @@ fun ChoiceButtons(
                             //.fillMaxWidth()
                             .align(Alignment.CenterVertically),
                         text = "(You bet ${myBet?.amount})",
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
                 Text(
@@ -200,7 +204,9 @@ fun ChoiceButtons(
                         //.fillMaxWidth()
                         .align(Alignment.CenterVertically),
                     text = " ${choice.percentage} %",
-                    textAlign = TextAlign.End
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
             }
 
