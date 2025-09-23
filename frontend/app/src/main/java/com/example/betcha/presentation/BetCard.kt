@@ -171,13 +171,16 @@ fun ChoiceButton(
         ) {
             Text(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.5f)
                     //.fillMaxWidth()
                     .align(Alignment.CenterVertically),
                 text = choice.text,
                 textAlign = TextAlign.Start,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+
             )
             if (myBet != null && myBet.choice_id == choice.choice_id) {
                 Text(
@@ -187,31 +190,9 @@ fun ChoiceButton(
                         .align(Alignment.CenterVertically),
                     text = "You bet ${myBet.amount}",
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-
-                )
-                if (myBet != null && myBet.choice_id == choice.choice_id) {
-                    Text(
-                        modifier = Modifier
-                            .weight(1f)
-                            //.fillMaxWidth()
-                            .align(Alignment.CenterVertically),
-                        text = "(You bet ${myBet?.amount})",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                    )
-                }
-                Text(
-                    modifier = Modifier
-                        .weight(1f)
-                        //.fillMaxWidth()
-                        .align(Alignment.CenterVertically),
-                    text = " ${choice.percentage} %",
-                    textAlign = TextAlign.End,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             Text(
@@ -219,10 +200,14 @@ fun ChoiceButton(
                     .weight(1f)
                     //.fillMaxWidth()
                     .align(Alignment.CenterVertically),
-                text = " ${choice.percentage} %",
-                textAlign = TextAlign.End
+                text = "%.2f".format(choice.percentage) + " %",
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+                maxLines = 1
             )
         }
+
 
     }
     Spacer(Modifier.height(8.dp))
@@ -398,7 +383,6 @@ fun BetCardv2(
 
             Spacer(Modifier.height(8.dp))
             bet.choices.forEach { choice ->
-
                 ChoiceButton(
                     choice,
                     bgColor = bet.choices.indexOf(choice) % 10,

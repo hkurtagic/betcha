@@ -37,7 +37,8 @@ fun parseDouble(s: String, locale: Locale = Locale.getDefault()): Double? {
 data class NumberErrorMessages(
     val required: String = "Required",
     val invalid: String = "Enter a valid number",
-    val negativeNotAllowed: String = "No negative numbers"
+    val negativeNotAllowed: String = "No negative numbers",
+    val maxIntAmount: String = "Bet Amount is too big"
 )
 
 fun validateNumberText(
@@ -57,6 +58,7 @@ fun validateNumberText(
     }
 
     if (parsed < 0.0) return messages.negativeNotAllowed
+    if (parsed > Int.MAX_VALUE) return messages.maxIntAmount
 
     return null
 }
