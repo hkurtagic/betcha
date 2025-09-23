@@ -3,7 +3,6 @@ package com.example.betcha.presentation
 import android.annotation.SuppressLint
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -149,32 +148,30 @@ fun GroupScreen(
             )
         },
         content = { innerPadding ->
-            Column(
-                modifier = Modifier.padding(innerPadding)
-
+            val fabPad = 72.dp
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(16.dp, top = 12.dp, bottom = 12.dp + fabPad),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(betState) { bet ->
-                        BetCardv2(
-                            userState.userId,
-                            bet,
-                            onChoiceClick = { betStake ->
-                                groupViewModel.updateStake(betStake)
-                            },
-                            onBetClose = { groupViewModel.closeBet(it) },
-                            onWinningChoice = {
-                                groupViewModel.selectWinningChoice(it)
-                            }
-                        )
+                items(betState) { bet ->
+                    BetCardv2(
+                        userState.userId,
+                        bet,
+                        onChoiceClick = { betStake ->
+                            groupViewModel.updateStake(betStake)
+                        },
+                        onBetClose = { groupViewModel.closeBet(it) },
+                        onWinningChoice = {
+                            groupViewModel.selectWinningChoice(it)
+                        }
+                    )
 
-                    }
                 }
             }
+
         }
     )
 }

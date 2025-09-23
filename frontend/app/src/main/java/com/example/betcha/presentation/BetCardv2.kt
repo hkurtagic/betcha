@@ -152,10 +152,11 @@ fun ChoiceButtons(
         if (selectedChoice != choice.choice_id && !(isBetClosed && isDone)) alpha = 0.6f
         if (selectedChoice == "" || selectedChoice == choice.choice_id || (isBetClosed && !isDone)) enabled =
             true
+
         Button(
             onClick = { onChoiceClick(choice.choice_id) },
             modifier = Modifier
-                .fillMaxWidth()
+                //.fillMaxWidth()
                 .alpha(alpha)
                 //.clip(shape)
                 //.padding(top = 8.dp)
@@ -170,13 +171,39 @@ fun ChoiceButtons(
             ),
             elevation = ButtonDefaults.buttonElevation(2.dp),
         ) {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.CenterVertically),
-                text = choice.text,
-                textAlign = TextAlign.Start
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                //horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    modifier = Modifier
+                        .weight(1f)
+                        //.fillMaxWidth()
+                        .align(Alignment.CenterVertically),
+                    text = choice.text,
+                    textAlign = TextAlign.Start,
+
+                    )
+                if (myBet != null && myBet.choice_id == choice.choice_id) {
+                    Text(
+                        modifier = Modifier
+                            .weight(1f)
+                            //.fillMaxWidth()
+                            .align(Alignment.CenterVertically),
+                        text = "(You bet ${myBet?.amount})",
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Text(
+                    modifier = Modifier
+                        .weight(1f)
+                        //.fillMaxWidth()
+                        .align(Alignment.CenterVertically),
+                    text = " ${choice.percentage} %",
+                    textAlign = TextAlign.End
+                )
+            }
+
         }
         Spacer(Modifier.height(8.dp))
     }
@@ -338,10 +365,25 @@ fun BetCardv2(
             }
             Spacer(Modifier.height(12.dp))
             if (bet.betStakes.isNotEmpty()) {
-                Text(
-                    modifier = Modifier.padding(start = 16.dp),
-                    style = MaterialTheme.typography.labelLarge, text = "Bet distribution"
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        text = "Bet distribution"
+                    )
+                    Text(
+                        modifier = Modifier.padding(end = 16.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        text = "Total Pot: 200000000000000000000000000",
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
                 Spacer(Modifier.height(8.dp))
                 ProgressBarContent(bet.choices)
                 Spacer(Modifier.height(8.dp))
@@ -392,11 +434,13 @@ fun BetCardv2(
                         onClick = {
                             showWinners = !showWinners
                             Log.i("BetCard | WinnerIcon", "showWinners: $showWinners")
-                        }
-                    ) {
+                        },
+
+                        ) {
                         Icon(
                             painter = painterResource(R.drawable.chart_data_48dp_000000_fill0_wght300_grad0_opsz48),
-                            contentDescription = "winners_of_bet_description"
+                            contentDescription = "winners_of_bet_description",
+                            modifier = Modifier.background(if (showWinners) Color.LightGray else Color.Transparent)
                         )
                     }
                 }
